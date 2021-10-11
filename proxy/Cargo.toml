@@ -1,0 +1,15 @@
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[package]
+name = "proxy"
+version = "0.1.0"
+edition = "2018"
+
+[features]
+concurrency = ["tokio/rt-multi-thread", "num_cpus"]
+default = ["concurrency"]
+
+[dependencies]
+tokio = { version = "1.12.0", features = ["net", "macros", "io-util", "rt"] }
+futures = { version = "0.3.0", features = ["thread-pool"]}
+num_cpus = { version = "1", optional = true }
