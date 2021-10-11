@@ -220,21 +220,21 @@ dependencies = [
 ]
 
 [[package]]
-name = "proxy"
-version = "0.1.0"
-dependencies = [
- "futures",
- "num_cpus",
- "tokio",
-]
-
-[[package]]
 name = "quote"
 version = "1.0.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "38bc8cc6a5f2e3655e0899c1b848643b2562f853f114bfec7be120678e3ace05"
 dependencies = [
  "proc-macro2",
+]
+
+[[package]]
+name = "server"
+version = "0.1.0"
+dependencies = [
+ "futures",
+ "num_cpus",
+ "tokio",
 ]
 
 [[package]]
