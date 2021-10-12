@@ -9,11 +9,8 @@ edition = "2018"
 concurrency = ["tokio/rt-multi-thread", "num_cpus"]
 default = ["concurrency"]
 
-[lib]
-name = "config_compiler"
-path = "../config-compiler/src/lib.rs"
-
 [dependencies]
 tokio = { version = "1.12.0", features = ["net", "macros", "io-util", "rt"] }
 futures = { version = "0.3.0", features = ["thread-pool"]}
 num_cpus = { version = "1", optional = true }
+config-compiler = { path = "../config-compiler" }

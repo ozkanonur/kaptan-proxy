@@ -14,13 +14,13 @@ pub(crate) fn create(_: &Config) -> Runtime {
 pub(crate) fn create(config: &Config) -> Runtime {
     let cpus = num_cpus::get();
 
-    if config.runtime_config.worker_cores > 0 {
-        println!("{} cpus will be used at runtime", config.runtime_config.worker_cores);
+    if config.runtime.worker_cores > 0 {
+        println!("{} cpus will be used at runtime", config.runtime.worker_cores);
     } else {
         println!("{} cpus will be used at runtime", cpus);
     }
 
-    match config.runtime_config.worker_cores {
+    match config.runtime.worker_cores {
         1 => Builder::new_current_thread()
             .enable_all()
             .thread_name("proxy_thread_space")
@@ -36,8 +36,8 @@ pub(crate) fn create(config: &Config) -> Runtime {
         _ => Builder::new_multi_thread()
             .enable_all()
             .thread_name("proxy_thread_space")
-            .worker_threads(config.runtime_config.worker_cores)
-            .max_blocking_threads(config.runtime_config.worker_cores)
+            .worker_threads(config.runtime.worker_cores)
+            .max_blocking_threads(config.runtime.worker_cores)
             .build()
             .expect("An unexpected error has occurred on creating multi-thread runtime."),
     }
