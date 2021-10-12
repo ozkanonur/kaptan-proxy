@@ -1,8 +1,8 @@
-use config_compiler::compiler::*;
+use config_compiler::config::*;
 use tokio::runtime::{Builder, Runtime};
 
 #[cfg(not(feature = "concurrency"))]
-pub(crate) fn create() -> Runtime {
+pub(crate) fn create(_: &Config) -> Runtime {
     Builder::new_current_thread()
         .enable_all()
         .thread_name("proxy_thread_space")
@@ -11,9 +11,7 @@ pub(crate) fn create() -> Runtime {
 }
 
 #[cfg(feature = "concurrency")]
-pub(crate) fn create() -> Runtime {
-    let config = get_configuration();
-
+pub(crate) fn create(config: &Config) -> Runtime {
     let cpus = num_cpus::get();
 
     if config.runtime_config.worker_cores > 0 {

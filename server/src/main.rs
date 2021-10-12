@@ -14,7 +14,7 @@ fn main() {
     let config = get_configuration();
     println!("{:?}", config);
 
-    runtime::create().block_on(async move {
+    runtime::create(&config).block_on(async move {
         let listen_addr = format_args!("127.0.0.1:{}", config.runtime_config.inbound_port).to_string();
         let server_addr = config.runtime_config.outbound_addr;
 

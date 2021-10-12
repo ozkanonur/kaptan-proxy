@@ -14,7 +14,7 @@ impl Default for Config {
     fn default() -> Self {
         Self {
             runtime_config: RuntimeConfig {
-                worker_cores: 5,
+                worker_cores: 0, // 0 means use all the available threads
                 inbound_port: 6150,
                 outbound_addr: "127.0.0.1:8080".to_string(),
             },
