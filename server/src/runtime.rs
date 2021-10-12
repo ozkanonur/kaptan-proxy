@@ -1,3 +1,4 @@
+use config_compiler::compiler::*;
 use tokio::runtime::{Builder, Runtime};
 
 #[cfg(not(feature = "concurrency"))]
@@ -11,36 +12,34 @@ pub(crate) fn create() -> Runtime {
 
 #[cfg(feature = "concurrency")]
 pub(crate) fn create() -> Runtime {
-    let mut cores = std::env::var("CORES")
-        .ok()
-        .and_then(|v| {
-            let opt = v.parse::<usize>().ok().filter(|n| *n > 0);
-            if opt.is_none() {
-                println!("CORES is not defined, the default workflow will be processed.");
-            }
-            opt
-        })
-        .unwrap_or(0);
+    let config = get_configuration();
 
     let cpus = num_cpus::get();
-    println!("{} cores are running", cpus);
-    debug_assert!(cpus > 0, "No available cpu was found");
 
-    if cores > cpus {
-        cores = cpus;
+    if config.runtime_config.worker_cores > 0 {
+        println!("{} cpus will be used at runtime", config.runtime_config.worker_cores);
+    } else {
+        println!("{} cpus will be used at runtime", cpus);
     }
 
-    match cores {
-        0 | 1 => Builder::new_current_thread()
+    match config.runtime_config.worker_cores {
+        1 => Builder::new_current_thread()
             .enable_all()
             .thread_name("proxy_thread_space")
             .build()
             .expect("An unexpected error has occurred on creating single-thread runtime."),
-        num_cpus => Builder::new_multi_thread()
+        0 => Builder::new_multi_thread()
             .enable_all()
             .thread_name("proxy_thread_space")
-            .worker_threads(num_cpus)
-            .max_blocking_threads(num_cpus)
+            .worker_threads(cpus)
+            .max_blocking_threads(cpus)
+            .build()
+            .expect("An unexpected error has occurred on creating multi-thread runtime."),
+        _ => Builder::new_multi_thread()
+            .enable_all()
+            .thread_name("proxy_thread_space")
+            .worker_threads(config.runtime_config.worker_cores)
+            .max_blocking_threads(config.runtime_config.worker_cores)
             .build()
             .expect("An unexpected error has occurred on creating multi-thread runtime."),
     }

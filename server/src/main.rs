@@ -1,23 +1,22 @@
 #![warn(rust_2018_idioms)]
 
+use config_compiler::compiler::*;
 use tokio::io;
 use tokio::io::AsyncWriteExt;
 use tokio::net::{TcpListener, TcpStream};
 
 use futures::FutureExt;
-use std::env;
 use std::error::Error;
 
 mod runtime;
 
 fn main() {
+    let config = get_configuration();
+    println!("{:?}", config);
+
     runtime::create().block_on(async move {
-        let listen_addr = env::args()
-            .nth(1)
-            .unwrap_or_else(|| "127.0.0.1:8081".to_string());
-        let server_addr = env::args()
-            .nth(2)
-            .unwrap_or_else(|| "127.0.0.1:8080".to_string());
+        let listen_addr = format_args!("127.0.0.1:{}", config.runtime_config.inbound_port).to_string();
+        let server_addr = config.runtime_config.outbound_addr;
 
         println!("Listening on: {}", listen_addr);
         println!("Proxying to: {}", server_addr);
