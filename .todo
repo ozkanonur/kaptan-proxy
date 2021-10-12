@@ -1,0 +1,3 @@
+- Configurations in /etc/kaptan/cfg.toml
+- Parse and use the configurations from /etc/kaptan/cfg.toml
+- Dynamic routing on proxy
