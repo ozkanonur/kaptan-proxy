@@ -260,10 +260,12 @@ dependencies = [
 name = "server"
 version = "0.1.0"
 dependencies = [
+ "bytes",
  "config-compiler",
  "futures",
  "num_cpus",
  "tokio",
+ "tokio-util",
 ]
 
 [[package]]
@@ -309,6 +311,20 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn",
+]
+
+[[package]]
+name = "tokio-util"
+version = "0.6.8"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "08d3725d3efa29485e87311c5b699de63cde14b00ed4d256b8318aa30ca452cd"
+dependencies = [
+ "bytes",
+ "futures-core",
+ "futures-sink",
+ "log",
+ "pin-project-lite",
+ "tokio",
 ]
 
 [[package]]

@@ -10,7 +10,9 @@ concurrency = ["tokio/rt-multi-thread", "num_cpus"]
 default = ["concurrency"]
 
 [dependencies]
+config-compiler = { path = "../config-compiler" }
 tokio = { version = "1.12.0", features = ["net", "macros", "io-util", "rt"] }
 futures = { version = "0.3.0", features = ["thread-pool"]}
 num_cpus = { version = "1", optional = true }
-config-compiler = { path = "../config-compiler" }
+tokio-util = { version="0.6.3", features=["codec", "io"] }
+bytes = "1.1.0"
