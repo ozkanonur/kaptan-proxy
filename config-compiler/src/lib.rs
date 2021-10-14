@@ -1,4 +1,10 @@
 #![forbid(unsafe_code)]
 
-pub mod config;
+use config::Config;
+
 pub mod compiler;
+pub mod config;
+
+pub trait Compiler {
+    fn read_from_fs() -> Config;
+}

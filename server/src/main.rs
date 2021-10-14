@@ -1,7 +1,7 @@
 #![warn(rust_2018_idioms)]
 #![forbid(unsafe_code)]
 
-use config_compiler::compiler::*;
+use config_compiler::{config::Config, Compiler};
 use futures::{stream::TryStreamExt, FutureExt};
 
 use logger::LogLevel;
@@ -14,15 +14,12 @@ use tokio_util::io::StreamReader;
 mod runtime;
 
 fn main() {
-    let config = get_configuration();
+    let config = Config::read_from_fs();
     println!("{:?}", config);
 
     runtime::create(&config).block_on(async move {
         let listen_addr = format_args!("127.0.0.1:{}", config.runtime.inbound_port).to_string();
         let server_addr = config.runtime.outbound_addr;
-
-        println!("Listening on: {}", listen_addr);
-        println!("Proxying to: {}", server_addr);
 
         let listener = TcpListener::bind(listen_addr).await.unwrap();
         while let Ok((inbound, _)) = listener.accept().await {

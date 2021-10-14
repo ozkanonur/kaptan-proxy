@@ -41,7 +41,7 @@ impl LogCapabilities for AccessLog<'_> {
         let mut log_file = OpenOptions::new()
             .append(true)
             .create(true)
-            .open("/var/log/kaptan-proxy/access-logs")
+            .open("access-logs")
             .expect("Unable to open file");
 
         let formatted_log = String::from_utf8_lossy(&self.log_message)
