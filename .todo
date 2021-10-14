@@ -8,3 +8,4 @@
 
 # Other
 - Create build/installation script
+- Build a container image and push it to the docker registry
