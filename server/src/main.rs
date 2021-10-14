@@ -4,6 +4,7 @@
 use config_compiler::compiler::*;
 use futures::{stream::TryStreamExt, FutureExt};
 
+use logger::LogLevel;
 use logger::{access_log::AccessLog, LogCapabilities};
 use tokio::io;
 use tokio::io::{AsyncWriteExt, Result};
@@ -25,19 +26,23 @@ fn main() {
 
         let listener = TcpListener::bind(listen_addr).await.unwrap();
         while let Ok((inbound, _)) = listener.accept().await {
-            let transfer =
-                transfer(inbound, server_addr.clone(), config.runtime.log_level).map(|r| {
-                    if let Err(e) = r {
-                        println!("Failed to transfer; error={}", e);
-                    }
-                });
+            let transfer = transfer(
+                inbound,
+                server_addr.clone(),
+                LogLevel::from_u8(config.runtime.log_level),
+            )
+            .map(|r| {
+                if let Err(e) = r {
+                    println!("Failed to transfer; error={}", e);
+                }
+            });
 
             tokio::spawn(transfer);
         }
     });
 }
 
-async fn transfer(mut inbound: TcpStream, proxy_addr: String, log_level: u8) -> Result<()> {
+async fn transfer(mut inbound: TcpStream, proxy_addr: String, log_level: LogLevel) -> Result<()> {
     let mut outbound = TcpStream::connect(proxy_addr).await?;
 
     let (read_inbound, mut write_inbound) = inbound.split();
@@ -45,7 +50,7 @@ async fn transfer(mut inbound: TcpStream, proxy_addr: String, log_level: u8) -> 
 
     let frames = FramedRead::new(read_inbound, BytesCodec::new()).map_ok(|buf| {
         match log_level {
-            1 => {
+            LogLevel::All => {
                 AccessLog { log_message: &buf }.write();
             }
             _ => (),

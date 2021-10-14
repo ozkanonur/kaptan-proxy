@@ -1,3 +1,20 @@
+#[repr(usize)]
+pub enum ThreadModel {
+    Default = 0,
+    Single = 1,
+    Multi,
+}
+
+impl ThreadModel {
+    pub fn from_usize(value: usize) -> ThreadModel {
+        match value {
+            0 => ThreadModel::Default,
+            1 => ThreadModel::Single,
+            _ => ThreadModel::Multi,
+        }
+    }
+}
+
 #[derive(Debug, serde::Deserialize)]
 pub struct Config {
     pub runtime: RuntimeConfig,
