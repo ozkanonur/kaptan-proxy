@@ -1,2 +1,3 @@
 - Dynamic routing on proxy
-- Create logger package
+- Create build/installation script
+- Create io-utils package for things like stream parsing, encoding-decoding, etc
