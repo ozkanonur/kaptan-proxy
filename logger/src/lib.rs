@@ -1,3 +1,5 @@
+#![forbid(unsafe_code)]
+
 use access_log::AccessLog;
 use chrono::Local;
 use std::fs::OpenOptions;
