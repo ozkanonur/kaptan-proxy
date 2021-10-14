@@ -1,4 +1,10 @@
+# Feature
 - Dynamic routing on proxy
-- Create build/installation script
 - Create io-utils package for things like stream parsing, encoding-decoding, etc
+
+# Optimization
 - Add comment descriptions all around the project
+- Create spesific enums for conditional cases rather than using directly values
+
+# Other
+- Create build/installation script
