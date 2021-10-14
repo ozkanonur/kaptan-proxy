@@ -1,15 +1,12 @@
 #![warn(rust_2018_idioms)]
+#![forbid(unsafe_code)]
 
-use bytes::Bytes;
 use config_compiler::compiler::*;
-use futures::{
-    self,
-    stream::{Stream, StreamExt, TryStreamExt},
-    FutureExt,
-};
+use futures::{stream::TryStreamExt, FutureExt};
+
+use logger::{access_log::AccessLog, LogCapabilities};
 use tokio::io;
-use tokio::io::AsyncWriteExt;
-use tokio::io::{AsyncRead, Result};
+use tokio::io::{AsyncWriteExt, Result};
 use tokio::net::{TcpListener, TcpStream};
 use tokio_util::codec::{BytesCodec, FramedRead};
 use tokio_util::io::StreamReader;
@@ -28,37 +25,37 @@ fn main() {
 
         let listener = TcpListener::bind(listen_addr).await.unwrap();
         while let Ok((inbound, _)) = listener.accept().await {
-            let transfer = transfer(inbound, server_addr.clone()).map(|r| {
-                if let Err(e) = r {
-                    println!("Failed to transfer; error={}", e);
-                }
-            });
+            let transfer =
+                transfer(inbound, server_addr.clone(), config.runtime.log_level).map(|r| {
+                    if let Err(e) = r {
+                        println!("Failed to transfer; error={}", e);
+                    }
+                });
 
             tokio::spawn(transfer);
         }
     });
 }
 
-fn byte_to_stream<R>(r: R) -> impl Stream<Item = Result<Bytes>>
-where
-    R: AsyncRead,
-{
-    FramedRead::new(r, BytesCodec::new()).map_ok(|bytes| bytes.freeze())
-}
-
-async fn transfer(mut inbound: TcpStream, proxy_addr: String) -> Result<()> {
+async fn transfer(mut inbound: TcpStream, proxy_addr: String, log_level: u8) -> Result<()> {
     let mut outbound = TcpStream::connect(proxy_addr).await?;
 
     let (read_inbound, mut write_inbound) = inbound.split();
     let (mut read_outbound, mut write_outbound) = outbound.split();
 
-    let cli_read_stream = byte_to_stream(read_inbound).map(|buf| {
-        println!("{:?}", buf);
+    let frames = FramedRead::new(read_inbound, BytesCodec::new()).map_ok(|buf| {
+        match log_level {
+            1 => {
+                AccessLog { log_message: &buf }.write();
+            }
+            _ => (),
+        }
+
         buf
     });
 
     let client_to_server = async {
-        let mut read_inbound = StreamReader::new(cli_read_stream);
+        let mut read_inbound = StreamReader::new(frames);
 
         io::copy(&mut read_inbound, &mut write_outbound).await?;
         write_outbound.shutdown().await
