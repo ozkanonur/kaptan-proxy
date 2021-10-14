@@ -1,3 +1,4 @@
 - Dynamic routing on proxy
 - Create build/installation script
 - Create io-utils package for things like stream parsing, encoding-decoding, etc
+- Add comment descriptions all around the project
