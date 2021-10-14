@@ -1,5 +1,3 @@
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
 [package]
 name = "server"
 version = "0.1.0"
@@ -10,7 +8,9 @@ concurrency = ["tokio/rt-multi-thread", "num_cpus"]
 default = ["concurrency"]
 
 [dependencies]
+config-compiler = { path = "../config-compiler" }
+logger = { path = "../logger" }
 tokio = { version = "1.12.0", features = ["net", "macros", "io-util", "rt"] }
+tokio-util = { version="0.6.3", features=["codec", "io"] }
 futures = { version = "0.3.0", features = ["thread-pool"]}
 num_cpus = { version = "1", optional = true }
-config-compiler = { path = "../config-compiler" }

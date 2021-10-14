@@ -1,13 +1,15 @@
 #![warn(rust_2018_idioms)]
+#![forbid(unsafe_code)]
 
 use config_compiler::compiler::*;
+use futures::{stream::TryStreamExt, FutureExt};
+
+use logger::{access_log::AccessLog, LogCapabilities};
 use tokio::io;
-use tokio::io::AsyncWriteExt;
+use tokio::io::{AsyncWriteExt, Result};
 use tokio::net::{TcpListener, TcpStream};
-
-use futures::FutureExt;
-use std::error::Error;
-
+use tokio_util::codec::{BytesCodec, FramedRead};
+use tokio_util::io::StreamReader;
 mod runtime;
 
 fn main() {
@@ -23,31 +25,45 @@ fn main() {
 
         let listener = TcpListener::bind(listen_addr).await.unwrap();
         while let Ok((inbound, _)) = listener.accept().await {
-            let transfer = transfer(inbound, server_addr.clone()).map(|r| {
-                if let Err(e) = r {
-                    println!("Failed to transfer; error={}", e);
-                }
-            });
+            let transfer =
+                transfer(inbound, server_addr.clone(), config.runtime.log_level).map(|r| {
+                    if let Err(e) = r {
+                        println!("Failed to transfer; error={}", e);
+                    }
+                });
 
             tokio::spawn(transfer);
         }
     });
 }
 
-async fn transfer(mut inbound: TcpStream, proxy_addr: String) -> Result<(), Box<dyn Error>> {
+async fn transfer(mut inbound: TcpStream, proxy_addr: String, log_level: u8) -> Result<()> {
     let mut outbound = TcpStream::connect(proxy_addr).await?;
 
-    let (mut ri, mut wi) = inbound.split();
-    let (mut ro, mut wo) = outbound.split();
+    let (read_inbound, mut write_inbound) = inbound.split();
+    let (mut read_outbound, mut write_outbound) = outbound.split();
+
+    let frames = FramedRead::new(read_inbound, BytesCodec::new()).map_ok(|buf| {
+        match log_level {
+            1 => {
+                AccessLog { log_message: &buf }.write();
+            }
+            _ => (),
+        }
+
+        buf
+    });
 
     let client_to_server = async {
-        io::copy(&mut ri, &mut wo).await?;
-        wo.shutdown().await
+        let mut read_inbound = StreamReader::new(frames);
+
+        io::copy(&mut read_inbound, &mut write_outbound).await?;
+        write_outbound.shutdown().await
     };
 
     let server_to_client = async {
-        io::copy(&mut ro, &mut wi).await?;
-        wi.shutdown().await
+        io::copy(&mut read_outbound, &mut write_inbound).await?;
+        write_inbound.shutdown().await
     };
 
     tokio::try_join!(client_to_server, server_to_client)?;
