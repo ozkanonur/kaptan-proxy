@@ -9,12 +9,25 @@ pub mod access_log;
 
 #[repr(u8)]
 pub enum LogLevel {
+    /// TODO:
     Off = 0,
+
+    /// TODO:
     All = 1,
+
+    /// TODO:
     Trace = 2,
+
+    /// TODO:
     Debug = 3,
+
+    /// TODO:
     Info = 4,
+
+    /// TODO:
     Warn = 5,
+
+    /// TODO:
     Error = 6,
 }
 
@@ -33,6 +46,22 @@ impl LogLevel {
 }
 
 pub trait LogCapabilities {
+    /// Writes the present instance's **log_message**
+    /// to the file system with system's local time.
+    ///
+    /// # Panics
+    /// If the read/write permissions are missing on the
+    /// log file.
+    ///
+    /// # Usage
+    /// ```
+    /// use logger::{access_log::AccessLog, LogCapabilities};
+    ///
+    /// fn main*( {
+    ///     AccessLog { log_message: &[0, 0, 0, 1] }.write();
+    /// }
+    ///
+    /// ```
     fn write(&self);
 }
 

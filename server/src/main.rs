@@ -17,7 +17,7 @@ fn main() {
     let config = Config::read_from_fs();
     println!("{:?}", config);
 
-    runtime::create(&config).block_on(async move {
+    runtime::create(&config.runtime).block_on(async move {
         let listen_addr = format_args!("127.0.0.1:{}", config.runtime.inbound_port).to_string();
         let server_addr = config.runtime.outbound_addr;
 
@@ -39,6 +39,12 @@ fn main() {
     });
 }
 
+/// Simply proxies inbound connection to outbound connection.
+/// Returns Result<()>.
+///
+/// # Panics
+/// No panic scenario implemented yet. However, logs
+/// the errors of destination address is unreachable.
 async fn transfer(mut inbound: TcpStream, proxy_addr: String, log_level: LogLevel) -> Result<()> {
     let mut outbound = TcpStream::connect(proxy_addr).await?;
 

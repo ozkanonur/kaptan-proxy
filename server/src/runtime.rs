@@ -2,6 +2,8 @@ use config_compiler::config::*;
 use tokio::runtime::{Builder, Runtime};
 
 #[cfg(not(feature = "concurrency"))]
+/// - Creates and returns a single-threaded instance of tokio::runtime::Runtime.
+/// - Will be used compiled only if the 'concurrency' feature is disabled.
 pub(crate) fn create(_: &Config) -> Runtime {
     Builder::new_current_thread()
         .enable_all()
@@ -11,19 +13,22 @@ pub(crate) fn create(_: &Config) -> Runtime {
 }
 
 #[cfg(feature = "concurrency")]
-pub(crate) fn create(config: &Config) -> Runtime {
+/// - Creates and returns an instance of tokio::runtime::Runtime.
+/// - Size of Thread Pool is determined by given RuntimeConfig.
+/// - Will be compiled only if the 'concurrency' feature is enabled.
+pub(crate) fn create(config: &RuntimeConfig) -> Runtime {
     let cpus = num_cpus::get();
 
-    if config.runtime.worker_cores > 0 {
+    if config.worker_threads > 0 {
         println!(
             "{} cpus will be used at runtime",
-            config.runtime.worker_cores
+            config.worker_threads
         );
     } else {
         println!("{} cpus will be used at runtime", cpus);
     }
 
-    match ThreadModel::from_usize(config.runtime.worker_cores) {
+    match ThreadModel::from_usize(config.worker_threads) {
         ThreadModel::Single => Builder::new_current_thread()
             .enable_all()
             .thread_name("proxy_thread_space")
@@ -39,8 +44,8 @@ pub(crate) fn create(config: &Config) -> Runtime {
         ThreadModel::Multi => Builder::new_multi_thread()
             .enable_all()
             .thread_name("proxy_thread_space")
-            .worker_threads(config.runtime.worker_cores)
-            .max_blocking_threads(config.runtime.worker_cores)
+            .worker_threads(config.worker_threads)
+            .max_blocking_threads(config.worker_threads)
             .build()
             .expect("An unexpected error has occurred on creating multi-thread runtime."),
     }
