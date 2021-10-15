@@ -1,5 +1,7 @@
 # Feature
 - Dynamic routing on proxy
+- Block/Allow incoming connections (based on request frequency or ip range)
+- Caching
 - Create io-utils package for things like stream parsing, encoding-decoding, etc
 
 # Optimization
