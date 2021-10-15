@@ -1,12 +1,16 @@
 # Feature
 - Dynamic routing on proxy
+- Block/Allow incoming connections (based on request frequency or ip range)
+- Caching
 - Create io-utils package for things like stream parsing, encoding-decoding, etc
 
 # Optimization
-- Add comment descriptions all around the project
 - Create spesific enums for conditional cases rather than using directly values
 
-# Other
+# Development
+- Add comment descriptions all around the project
 - Write unit tests for current flows
 - Create build/installation script
+
+# Other
 - Build a container image and push it to the docker registry
