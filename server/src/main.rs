@@ -17,15 +17,14 @@ fn main() {
     let config = Config::read_from_fs();
     println!("{:?}", config);
 
+    let listen_addr = format_args!("127.0.0.1:{}", config.runtime.inbound_port).to_string();
     runtime::create(&config.runtime).block_on(async move {
-        let listen_addr = format_args!("127.0.0.1:{}", config.runtime.inbound_port).to_string();
-        let server_addr = config.runtime.outbound_addr;
 
         let listener = TcpListener::bind(listen_addr).await.unwrap();
         while let Ok((inbound, _)) = listener.accept().await {
             let transfer = transfer(
                 inbound,
-                server_addr.clone(),
+                config.runtime.outbound_addr.clone(),
                 LogLevel::from_u8(config.runtime.log_level),
             )
             .map(|r| {

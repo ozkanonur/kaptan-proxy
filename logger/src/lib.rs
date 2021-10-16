@@ -75,7 +75,7 @@ impl LogCapabilities for AccessLog<'_> {
 
         let formatted_log = String::from_utf8_lossy(&self.log_message)
             .trim()
-            .replace("\r\n", "");
+            .replace("\r\n", " | ");
         let local_time = Local::now();
         let formatted_log = format!("{} -> {}\n", local_time, formatted_log);
         log_file.write_all(formatted_log.as_bytes()).expect("stuff");
