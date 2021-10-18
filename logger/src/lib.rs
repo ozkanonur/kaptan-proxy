@@ -73,6 +73,7 @@ impl LogCapabilities for AccessLog<'_> {
             .open("access-logs")
             .expect("Unable to open file");
 
+        println!("{:?}", String::from_utf8_lossy(&self.log_message).split("\r\n").next());
         let formatted_log = String::from_utf8_lossy(&self.log_message)
             .trim()
             .replace("\r\n", " | ");
