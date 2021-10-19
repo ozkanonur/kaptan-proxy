@@ -1,4 +1,5 @@
 # Feature
+- Empower infrastructure with tower & hyper
 - Dynamic routing on proxy
 - Block/Allow incoming connections (based on request frequency or ip range)
 - Caching
