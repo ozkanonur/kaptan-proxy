@@ -1,9 +1,15 @@
 #![warn(rust_2018_idioms)]
 #![forbid(unsafe_code)]
 
-use config_compiler::{config::Config, Compiler};
+use std::sync::{Arc, RwLock};
+
+use config_compiler::{
+    config::{Config, RoutesStruct},
+    Compiler,
+};
 use futures::{stream::TryStreamExt, FutureExt};
 
+use http::{payload::HttpQualifications, ParseRawTcpBuffer};
 use logger::LogLevel;
 use logger::{access_log::AccessLog, LogCapabilities};
 use tokio::io;
@@ -19,12 +25,11 @@ fn main() {
 
     let listen_addr = format_args!("127.0.0.1:{}", config.runtime.inbound_port).to_string();
     runtime::create(&config.runtime).block_on(async move {
-
         let listener = TcpListener::bind(listen_addr).await.unwrap();
         while let Ok((inbound, _)) = listener.accept().await {
             let transfer = transfer(
                 inbound,
-                config.runtime.outbound_addr.clone(),
+                config.target.routes.clone(),
                 LogLevel::from_u8(config.runtime.log_level),
             )
             .map(|r| {
@@ -44,25 +49,48 @@ fn main() {
 /// # Panics
 /// No panic scenario implemented yet. However, logs
 /// the errors of destination address is unreachable.
-async fn transfer(mut inbound: TcpStream, proxy_addr: String, log_level: LogLevel) -> Result<()> {
-    let mut outbound = TcpStream::connect(proxy_addr).await?;
-
+async fn transfer(
+    mut inbound: TcpStream,
+    routes: Option<Vec<RoutesStruct>>,
+    log_level: LogLevel,
+) -> Result<()> {
     let (read_inbound, mut write_inbound) = inbound.split();
-    let (mut read_outbound, mut write_outbound) = outbound.split();
+    let target = Arc::new(RwLock::new(String::from("127.0.0.1:8080")));
 
-    let frames = FramedRead::new(read_inbound, BytesCodec::new()).map_ok(|buf| {
+    let framed = FramedRead::new(read_inbound, BytesCodec::new()).map_ok(|buf| {
+        let buf_as_str = String::from_utf8_lossy(&buf).to_string();
+        let http_qualifications = HttpQualifications::parse(&buf_as_str);
+        let path = http_qualifications.path.clone().unwrap();
+
         match log_level {
             LogLevel::All => {
-                AccessLog { log_message: &buf }.write();
+                AccessLog {
+                    log_message: buf_as_str,
+                }
+                .write();
             }
             _ => (),
         }
 
+        let routes_ref = routes.as_ref();
+        let index = routes_ref
+            .unwrap()
+            .iter()
+            .position(|r| r.route == path)
+            .unwrap();
+
+        let target = Arc::clone(&target);
+        *target.write().unwrap() = routes_ref.unwrap()[index].target.to_string();
         buf
     });
 
+    let dest_addr = target.read().unwrap().as_str().to_string();
+
+    let mut outbound = TcpStream::connect(dest_addr).await?;
+    let (mut read_outbound, mut write_outbound) = outbound.split();
+
     let client_to_server = async {
-        let mut read_inbound = StreamReader::new(frames);
+        let mut read_inbound = StreamReader::new(framed);
 
         io::copy(&mut read_inbound, &mut write_outbound).await?;
         write_outbound.shutdown().await
