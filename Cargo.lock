@@ -143,6 +143,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "http"
+version = "0.1.0"
+
+[[package]]
 name = "libc"
 version = "0.2.103"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -320,6 +324,7 @@ version = "0.1.0"
 dependencies = [
  "config-compiler",
  "futures",
+ "http",
  "logger",
  "num_cpus",
  "tokio",

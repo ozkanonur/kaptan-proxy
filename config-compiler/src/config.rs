@@ -72,7 +72,7 @@ pub struct Target {
     pub routes: Option<Vec<RoutesStruct>>,
 }
 
-#[derive(Debug, serde::Deserialize)]
+#[derive(Debug, Clone, serde::Deserialize)]
 pub struct RoutesStruct {
     /// Route that will proxy to destionation address.
     pub route: String,

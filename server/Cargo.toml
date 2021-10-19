@@ -10,6 +10,7 @@ default = ["concurrency"]
 [dependencies]
 config-compiler = { path = "../config-compiler" }
 logger = { path = "../logger" }
+http = { path = "../http" }
 tokio = { version = "1.12.0", features = ["net", "macros", "io-util", "rt"] }
 tokio-util = { version="0.6.3", features=["codec", "io"] }
 futures = { version = "0.3.0", features = ["thread-pool"]}

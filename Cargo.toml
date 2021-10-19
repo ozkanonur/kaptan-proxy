@@ -3,4 +3,5 @@ members = [
 	"config-compiler",
 	"logger",
     "server",
+	"http",
 ]
