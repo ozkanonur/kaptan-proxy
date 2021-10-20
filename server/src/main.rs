@@ -1,7 +1,10 @@
 #![warn(rust_2018_idioms)]
 #![forbid(unsafe_code)]
 
-use std::sync::{Arc, RwLock};
+use std::{
+    convert::Infallible,
+    sync::{Arc, RwLock},
+};
 
 use config_compiler::{
     config::{Config, RoutesStruct},
@@ -10,6 +13,7 @@ use config_compiler::{
 use futures::{stream::TryStreamExt, FutureExt};
 
 use http::{payload::HttpQualifications, ParseRawTcpBuffer};
+use hyper::{server::conn::Http, service::service_fn, Body, Client, Error, Request, Response};
 use logger::LogLevel;
 use logger::{access_log::AccessLog, LogCapabilities};
 use tokio::io;
@@ -25,22 +29,36 @@ fn main() {
 
     let listen_addr = format_args!("127.0.0.1:{}", config.runtime.inbound_port).to_string();
     runtime::create(&config.runtime).block_on(async move {
-        let listener = TcpListener::bind(listen_addr).await.unwrap();
-        while let Ok((inbound, _)) = listener.accept().await {
-            let transfer = transfer(
-                inbound,
-                config.target.routes.clone(),
-                LogLevel::from_u8(config.runtime.log_level),
-            )
-            .map(|r| {
-                if let Err(e) = r {
-                    println!("Failed to transfer; error={}", e);
+        let tcp_listener = TcpListener::bind(listen_addr).await.unwrap();
+
+        while let Ok((tcp_stream, _)) = tcp_listener.accept().await {
+            tokio::task::spawn(async move {
+                if let Err(http_err) = Http::new()
+                    .http1_only(true)
+                    .http1_keep_alive(true)
+                    .serve_connection(tcp_stream, service_fn(hello))
+                    .await
+                {
+                    eprintln!("Error while serving HTTP connection: {}", http_err);
                 }
             });
-
-            tokio::spawn(transfer);
         }
     });
+}
+
+async fn hello(mut req: Request<Body>) -> Result<Response<Body>> {
+    let client = Client::new();
+        let uri_string = format!(
+            "http://{}{}",
+            "127.0.0.1:8080",
+            req.uri().path_and_query().map(|x| x.as_str()).unwrap_or("")
+        );
+
+        println!("uri_string:: {:?}", uri_string);
+
+        let uri = uri_string.parse().unwrap();
+        *req.uri_mut() = uri;
+        Ok(client.request(req).await.unwrap())
 }
 
 /// Simply proxies inbound connection to outbound connection.
@@ -51,47 +69,15 @@ fn main() {
 /// the errors of destination address is unreachable.
 async fn transfer(
     mut inbound: TcpStream,
-    routes: Option<Vec<RoutesStruct>>,
-    log_level: LogLevel,
+    _routes: Option<Vec<RoutesStruct>>,
+    _log_level: LogLevel,
 ) -> Result<()> {
-    let (read_inbound, mut write_inbound) = inbound.split();
-    let target = Arc::new(RwLock::new(String::from("127.0.0.1:8080")));
+    let (mut read_inbound, mut write_inbound) = inbound.split();
 
-    let framed = FramedRead::new(read_inbound, BytesCodec::new()).map_ok(|buf| {
-        let buf_as_str = String::from_utf8_lossy(&buf).to_string();
-        let http_qualifications = HttpQualifications::parse(&buf_as_str);
-        let path = http_qualifications.path.clone().unwrap();
-
-        match log_level {
-            LogLevel::All => {
-                AccessLog {
-                    log_message: buf_as_str,
-                }
-                .write();
-            }
-            _ => (),
-        }
-
-        let routes_ref = routes.as_ref();
-        let index = routes_ref
-            .unwrap()
-            .iter()
-            .position(|r| r.route == path)
-            .unwrap();
-
-        let target = Arc::clone(&target);
-        *target.write().unwrap() = routes_ref.unwrap()[index].target.to_string();
-        buf
-    });
-
-    let dest_addr = target.read().unwrap().as_str().to_string();
-
-    let mut outbound = TcpStream::connect(dest_addr).await?;
+    let mut outbound = TcpStream::connect("127.0.0.1:8080").await?;
     let (mut read_outbound, mut write_outbound) = outbound.split();
 
     let client_to_server = async {
-        let mut read_inbound = StreamReader::new(framed);
-
         io::copy(&mut read_inbound, &mut write_outbound).await?;
         write_outbound.shutdown().await
     };
