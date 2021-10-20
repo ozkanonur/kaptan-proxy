@@ -1,26 +1,16 @@
 #![warn(rust_2018_idioms)]
 #![forbid(unsafe_code)]
 
-use std::{
-    convert::Infallible,
-    sync::{Arc, RwLock},
-};
-
 use config_compiler::{
     config::{Config, RoutesStruct},
     Compiler,
 };
-use futures::{stream::TryStreamExt, FutureExt};
 
-use http::{payload::HttpQualifications, ParseRawTcpBuffer};
-use hyper::{server::conn::Http, service::service_fn, Body, Client, Error, Request, Response};
+use hyper::{server::conn::Http, service::service_fn, Body, Client, Request, Response};
 use logger::LogLevel;
-use logger::{access_log::AccessLog, LogCapabilities};
 use tokio::io;
 use tokio::io::{AsyncWriteExt, Result};
 use tokio::net::{TcpListener, TcpStream};
-use tokio_util::codec::{BytesCodec, FramedRead};
-use tokio_util::io::StreamReader;
 mod runtime;
 
 fn main() {
@@ -34,9 +24,8 @@ fn main() {
         while let Ok((tcp_stream, _)) = tcp_listener.accept().await {
             tokio::task::spawn(async move {
                 if let Err(http_err) = Http::new()
-                    .http1_only(true)
                     .http1_keep_alive(true)
-                    .serve_connection(tcp_stream, service_fn(hello))
+                    .serve_connection(tcp_stream, service_fn(move |req| hello(req, "testing-stuff")))
                     .await
                 {
                     eprintln!("Error while serving HTTP connection: {}", http_err);
@@ -46,19 +35,18 @@ fn main() {
     });
 }
 
-async fn hello(mut req: Request<Body>) -> Result<Response<Body>> {
+async fn hello(mut req: Request<Body>, path: &str) -> Result<Response<Body>> {
+    println!("{}", path);
     let client = Client::new();
-        let uri_string = format!(
-            "http://{}{}",
-            "127.0.0.1:8080",
-            req.uri().path_and_query().map(|x| x.as_str()).unwrap_or("")
-        );
+    let uri_string = format!(
+        "http://{}{}",
+        "127.0.0.1:8080",
+        req.uri().path_and_query().map(|x| x.as_str()).unwrap_or("")
+    );
 
-        println!("uri_string:: {:?}", uri_string);
-
-        let uri = uri_string.parse().unwrap();
-        *req.uri_mut() = uri;
-        Ok(client.request(req).await.unwrap())
+    let uri = uri_string.parse().unwrap();
+    *req.uri_mut() = uri;
+    Ok(client.request(req).await.unwrap())
 }
 
 /// Simply proxies inbound connection to outbound connection.
@@ -91,3 +79,4 @@ async fn transfer(
 
     Ok(())
 }
+
