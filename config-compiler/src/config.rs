@@ -23,7 +23,7 @@ impl ThreadModel {
     }
 }
 
-#[derive(Debug, serde::Deserialize)]
+#[derive(Debug, Clone, serde::Deserialize)]
 pub struct Config {
     /// Provides necessary configurations that runtime needs.
     pub runtime: RuntimeConfig,
@@ -31,7 +31,7 @@ pub struct Config {
     pub target: Target,
 }
 
-#[derive(Debug, serde::Deserialize)]
+#[derive(Debug, Clone, serde::Deserialize)]
 pub struct RuntimeConfig {
     /// Specifies the number of threads to run in the runtime.
     ///
@@ -58,7 +58,7 @@ pub struct RuntimeConfig {
     pub log_level: u8,
 }
 
-#[derive(Debug, serde::Deserialize)]
+#[derive(Debug, Clone, serde::Deserialize)]
 pub struct Target {
     /// Specifies the routes and the address to which they will be proxied.
     ///

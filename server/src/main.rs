@@ -21,13 +21,15 @@ fn main() {
         let tcp_listener = TcpListener::bind(listen_addr).await.unwrap();
 
         while let Ok((tcp_stream, _)) = tcp_listener.accept().await {
-            tokio::task::spawn(async move {
+            let config = config.clone();
+
+            tokio::spawn(async move {
                 if let Err(http_err) = Http::new()
                     .http1_keep_alive(true)
                     .serve_connection(
                         tcp_stream,
                         ServiceBuilder::new().service(ProxyService {
-                            routes: Config::read_from_fs().target.routes,
+                            routes: config.target.routes,
                         }),
                     )
                     .await
