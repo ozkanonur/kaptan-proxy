@@ -1,5 +1,11 @@
 [runtime]
-worker_threads = "0"
-inbound_port = "6150"
-outbound_addr = "127.0.0.1:8080"
-log_level = "0"
+worker_threads = 0
+inbound_port = 6150
+log_level = 1
+
+[target]
+routes = [
+	{ route = "/", target = "http://127.0.0.1:8080" },
+	{ route = "/abc", target = "http://127.0.0.1:8080/Downloads" }
+]
+

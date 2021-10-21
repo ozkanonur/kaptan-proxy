@@ -1,21 +1,20 @@
 #![warn(rust_2018_idioms)]
 #![forbid(unsafe_code)]
 
-use config_compiler::{
-    config::{Config, RoutesStruct},
-    Compiler,
-};
+use std::convert::Infallible;
+use std::task::Poll;
 
-use hyper::{server::conn::Http, service::service_fn, Body, Client, Request, Response};
-use logger::LogLevel;
-use tokio::io;
-use tokio::io::{AsyncWriteExt, Result};
-use tokio::net::{TcpListener, TcpStream};
+use config_compiler::config::RoutesStruct;
+use config_compiler::{config::Config, Compiler};
+
+use hyper::{server::conn::Http, Body, Client, Request, Response};
+use tokio::net::TcpListener;
+use tower::{Service, ServiceBuilder};
+
 mod runtime;
 
 fn main() {
     let config = Config::read_from_fs();
-    println!("{:?}", config);
 
     let listen_addr = format_args!("127.0.0.1:{}", config.runtime.inbound_port).to_string();
     runtime::create(&config.runtime).block_on(async move {
@@ -25,7 +24,12 @@ fn main() {
             tokio::task::spawn(async move {
                 if let Err(http_err) = Http::new()
                     .http1_keep_alive(true)
-                    .serve_connection(tcp_stream, service_fn(move |req| hello(req, "testing-stuff")))
+                    .serve_connection(
+                        tcp_stream,
+                        ServiceBuilder::new().service(ProxyService {
+                            routes: Config::read_from_fs().target.routes,
+                        }),
+                    )
                     .await
                 {
                     eprintln!("Error while serving HTTP connection: {}", http_err);
@@ -35,48 +39,49 @@ fn main() {
     });
 }
 
-async fn hello(mut req: Request<Body>, path: &str) -> Result<Response<Body>> {
-    println!("{}", path);
-    let client = Client::new();
-    let uri_string = format!(
-        "http://{}{}",
-        "127.0.0.1:8080",
-        req.uri().path_and_query().map(|x| x.as_str()).unwrap_or("")
-    );
-
-    let uri = uri_string.parse().unwrap();
-    *req.uri_mut() = uri;
-    Ok(client.request(req).await.unwrap())
+struct ProxyService {
+    routes: Option<Vec<RoutesStruct>>,
 }
 
-/// Simply proxies inbound connection to outbound connection.
-/// Returns Result<()>.
-///
-/// # Panics
-/// No panic scenario implemented yet. However, logs
-/// the errors of destination address is unreachable.
-async fn transfer(
-    mut inbound: TcpStream,
-    _routes: Option<Vec<RoutesStruct>>,
-    _log_level: LogLevel,
-) -> Result<()> {
-    let (mut read_inbound, mut write_inbound) = inbound.split();
+impl Service<Request<Body>> for ProxyService {
+    type Response = Response<Body>;
+    type Error = Infallible;
+    type Future = futures::future::BoxFuture<'static, Result<Self::Response, Self::Error>>;
 
-    let mut outbound = TcpStream::connect("127.0.0.1:8080").await?;
-    let (mut read_outbound, mut write_outbound) = outbound.split();
+    fn poll_ready(
+        &mut self,
+        _cx: &mut std::task::Context<'_>,
+    ) -> std::task::Poll<Result<(), Self::Error>> {
+        Poll::Ready(Ok(()))
+    }
 
-    let client_to_server = async {
-        io::copy(&mut read_inbound, &mut write_outbound).await?;
-        write_outbound.shutdown().await
-    };
+    fn call(&mut self, mut req: Request<Body>) -> Self::Future {
+        let routes_ref = self.routes.as_ref();
+        let mut target;
 
-    let server_to_client = async {
-        io::copy(&mut read_outbound, &mut write_inbound).await?;
-        write_inbound.shutdown().await
-    };
+        let mut index = routes_ref.unwrap().iter().position(|r| {
+            r.route == req.uri().to_string() || r.route.to_owned() + "/" == req.uri().to_string()
+        });
 
-    tokio::try_join!(client_to_server, server_to_client)?;
+        if index.is_some() {
+            target = routes_ref.unwrap()[index.unwrap()].target.to_string();
+        } else {
+            index = routes_ref.unwrap().iter().position(|r| r.route == "/");
+            // TODO: log error if no route exists
+            target = routes_ref.unwrap()[index.unwrap()].target.to_string();
+            target.push_str(&req.uri().to_string());
+        }
 
-    Ok(())
+        if target.chars().last() != Some('/') {
+            target.push('/');
+        }
+
+        Box::pin(async move {
+            let client = Client::new();
+            *req.uri_mut() = target.parse().unwrap();
+            let res = client.request(req).await.unwrap();
+            Ok(res)
+        })
+    }
 }
 

@@ -11,10 +11,10 @@ default = ["concurrency"]
 config-compiler = { path = "../config-compiler" }
 logger = { path = "../logger" }
 http = { path = "../http" }
-tokio = { version = "1.12.0", features = ["full"] }
+tokio = { version = "1.12.0", features = ["net", "macros", "io-util", "rt"] }
 tokio-util = { version="0.6.3", features=["codec", "io"] }
 futures = { version = "0.3.0", features = ["thread-pool"]}
 num_cpus = { version = "1", optional = true }
-tower = { version = "0.4.10", features = ["full"] }
-hyper = { version = "0.14.13", features = ["full"] }
+hyper = { version = "0.14.13", features = ["server", "client", "tcp", "http1", "http2"]}
+tower = "0.4.10"
 

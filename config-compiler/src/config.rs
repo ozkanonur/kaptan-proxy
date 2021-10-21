@@ -43,12 +43,6 @@ pub struct RuntimeConfig {
     /// Default: 6150
     pub inbound_port: u32,
 
-    /// Specifies the destination address to which incoming
-    /// requests will proxy.
-    ///
-    /// Default: 127.0.0.1:8080
-    pub outbound_addr: String,
-
     /// Specifies the logging level/profile of the runtime.
     ///
     /// # Levels
@@ -86,7 +80,6 @@ impl Default for Config {
             runtime: RuntimeConfig {
                 worker_threads: 0,
                 inbound_port: 6150,
-                outbound_addr: "127.0.0.1:8080".to_string(),
                 log_level: 0,
             },
             target: Target { routes: None },
