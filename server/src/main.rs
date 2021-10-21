@@ -15,13 +15,14 @@ mod runtime;
 
 fn main() {
     let config = Config::read_from_fs();
+    let routes = config.target.routes.clone();
 
     let listen_addr = format_args!("127.0.0.1:{}", config.runtime.inbound_port).to_string();
     runtime::create(&config.runtime).block_on(async move {
         let tcp_listener = TcpListener::bind(listen_addr).await.unwrap();
 
         while let Ok((tcp_stream, _)) = tcp_listener.accept().await {
-            let config = config.clone();
+            let routes = routes.clone();
 
             tokio::spawn(async move {
                 if let Err(http_err) = Http::new()
@@ -29,7 +30,7 @@ fn main() {
                     .serve_connection(
                         tcp_stream,
                         ServiceBuilder::new().service(ProxyService {
-                            routes: config.target.routes,
+                            routes
                         }),
                     )
                     .await
