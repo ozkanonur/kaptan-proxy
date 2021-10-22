@@ -170,9 +170,9 @@ dependencies = [
 
 [[package]]
 name = "http-body"
-version = "0.4.3"
+version = "0.4.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "399c583b2979440c60be0821a6199eca73bc3c8dcd9d070d75ac726e2c6186e5"
+checksum = "1ff4f84919677303da5f147645dbea6b1881f368d03ac84e1dc09031ebd7b2c6"
 dependencies = [
  "bytes",
  "http",
@@ -266,6 +266,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "308cc39be01b73d0d18f82a0e7b2a3df85245f84af96fdddc5d202d27e47b86a"
 
 [[package]]
+name = "middlewares"
+version = "0.1.0"
+dependencies = [
+ "futures",
+ "hyper",
+ "pin-project",
+ "tower",
+]
+
+[[package]]
 name = "mio"
 version = "0.7.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -285,17 +295,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b9f1c5b025cda876f66ef43a113f91ebc9f4ccef34843000e0adf6ebbab84e21"
 dependencies = [
  "winapi",
-]
-
-[[package]]
-name = "network-services"
-version = "0.1.0"
-dependencies = [
- "config-compiler",
- "futures",
- "hyper",
- "pin-project",
- "tower",
 ]
 
 [[package]]
@@ -400,6 +399,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "proxy"
+version = "0.1.0"
+dependencies = [
+ "config-compiler",
+ "futures",
+ "hyper",
+ "pin-project",
+ "tower",
+]
+
+[[package]]
 name = "quote"
 version = "1.0.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -434,8 +444,9 @@ version = "0.1.0"
 dependencies = [
  "config-compiler",
  "logger",
- "network-services",
+ "middlewares",
  "num_cpus",
+ "proxy",
  "tokio",
 ]
 
@@ -563,7 +574,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "375a639232caf30edfc78e8d89b2d4c375515393e7af7e16f01cd96917fb2105"
 dependencies = [
  "cfg-if",
- "log",
  "pin-project-lite",
  "tracing-attributes",
  "tracing-core",

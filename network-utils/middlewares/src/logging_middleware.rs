@@ -5,7 +5,7 @@ use std::{pin::Pin, task::Poll};
 use tower::Service;
 
 #[pin_project]
-/// Result type of tower implementation of AccessLogService.
+/// Result type of tower implementation of LoggingMiddleware.
 ///
 /// Created to avoid of BoxFuture implementation which
 /// causes runtime overhead, or Pinning the Result that causes
@@ -36,12 +36,12 @@ where
 /// two connections.
 ///
 /// (Runs after all the middlewares are executed.)
-pub struct AccessLogService<S> {
+pub struct LoggingMiddleware<S> {
     inner: S,
 }
 
-impl<S> AccessLogService<S> {
-    /// Creates and returns an instance of AccessLogService.
+impl<S> LoggingMiddleware<S> {
+    /// Creates and returns an instance of LoggingMiddleware.
     ///
     /// Takes another middleware as an argument.
     pub fn new(inner: S) -> Self {
@@ -49,7 +49,7 @@ impl<S> AccessLogService<S> {
     }
 }
 
-impl<S, B> Service<Request<B>> for AccessLogService<S>
+impl<S, B> Service<Request<B>> for LoggingMiddleware<S>
 where
     S: 'static + Service<Request<B>> + Clone + Send,
     B: 'static + Send,

@@ -2,9 +2,9 @@
 #![forbid(unsafe_code)]
 
 use config_compiler::{config::Config, Compiler};
-use network_services::{
-    access_log_service::AccessLogService, proxy_service::ProxyService, Http, ServiceBuilder,
-};
+use middlewares::logging_middleware::LoggingMiddleware;
+
+use proxy::{service::ProxyService, Http, ServiceBuilder};
 
 use tokio::net::TcpListener;
 
@@ -28,7 +28,7 @@ fn main() {
                     .http1_keep_alive(true)
                     .serve_connection(
                         tcp_stream,
-                        service_builder.service(AccessLogService::new(ProxyService { routes })),
+                        service_builder.service(LoggingMiddleware::new(ProxyService { routes })),
                     )
                     .await
                 {

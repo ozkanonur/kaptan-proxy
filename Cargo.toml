@@ -3,5 +3,6 @@ members = [
 	"config-compiler",
 	"logger",
     "server",
-	"network-services",
+	"network-utils/middlewares",
+	"network-utils/proxy",
 ]

@@ -10,6 +10,7 @@ default = ["concurrency"]
 [dependencies]
 config-compiler = { path = "../config-compiler" }
 logger = { path = "../logger" }
-network-services = { path = "../network-services" }
+proxy = { path = "../network-utils/proxy" }
+middlewares = { path = "../network-utils/middlewares" }
 tokio = { version = "1.12.0", features = ["net", "macros", "io-util", "rt"] }
 num_cpus = { version = "1", optional = true }
