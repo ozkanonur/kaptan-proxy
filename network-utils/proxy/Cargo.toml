@@ -5,7 +5,6 @@ edition = "2018"
 
 [dependencies]
 config-compiler = { path = "../../config-compiler" }
-pin-project = "1.0.8"
 tower = { version = "0.4.10", features = ["limit"], default-features = false }
 futures = { version = "0.3.0", features = ["thread-pool"], default-features = false }
-hyper = { version = "0.14.13", features = ["server", "client", "tcp", "http1", "http2"]}
+hyper = { version = "0.14.13", features = ["server", "client", "tcp"]}
