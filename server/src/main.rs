@@ -13,6 +13,39 @@ use tower::{Service, ServiceBuilder};
 
 mod runtime;
 
+struct LoggerExample<S> {
+    inner: S,
+}
+
+impl<S> LoggerExample<S> {
+    fn new(inner: S) -> Self {
+        Self { inner }
+    }
+}
+
+impl<S, B> Service<Request<B>> for LoggerExample<S>
+where
+    S: 'static + Service<Request<B>> + Clone + Send,
+    B: 'static + Send,
+    S::Future: 'static + Send
+{
+    type Response = S::Response;
+
+    type Error = S::Error;
+
+    type Future = futures::future::BoxFuture<'static, Result<Self::Response, Self::Error>>;
+
+    fn poll_ready(&mut self, cx: &mut std::task::Context<'_>) -> Poll<Result<(), Self::Error>> {
+        self.inner.poll_ready(cx)
+    }
+
+    fn call(&mut self, req: Request<B>) -> Self::Future {
+        let mut inner = self.inner.clone();
+        println!("middleware works {}", req.uri());
+        Box::pin(async move { inner.call(req).await })
+    }
+}
+
 fn main() {
     let config = Config::read_from_fs();
     let routes = config.target.routes.clone();
@@ -31,7 +64,7 @@ fn main() {
                     .http1_keep_alive(true)
                     .serve_connection(
                         tcp_stream,
-                        service_builder.service(ProxyService { routes: &routes }),
+                        service_builder.service(LoggerExample::new(ProxyService { routes })),
                     )
                     .await
                 {
@@ -42,11 +75,12 @@ fn main() {
     });
 }
 
-struct ProxyService<'a> {
-    routes: &'a Option<Vec<RoutesStruct>>,
+#[derive(Clone)]
+struct ProxyService {
+    routes: Option<Vec<RoutesStruct>>,
 }
 
-impl Service<Request<Body>> for ProxyService<'_> {
+impl Service<Request<Body>> for ProxyService {
     type Response = Response<Body>;
     type Error = Infallible;
     type Future = futures::future::BoxFuture<'static, Result<Self::Response, Self::Error>>;
@@ -79,10 +113,17 @@ impl Service<Request<Body>> for ProxyService<'_> {
             target.push('/');
         }
 
+        // TODO
+        // Header manipulation on request
+        // req.headers_mut().insert("Example-Header", "Here it is".parse().unwrap());
+
         Box::pin(async move {
             let client = Client::new();
             *req.uri_mut() = target.parse().unwrap();
             let res = client.request(req).await.unwrap();
+            // TODO
+            // Header manipulation on response
+            // res.headers_mut().insert("Example-Header", "Here it is".parse().unwrap());
             Ok(res)
         })
     }
