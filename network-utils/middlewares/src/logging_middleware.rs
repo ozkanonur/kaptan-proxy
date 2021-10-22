@@ -52,7 +52,7 @@ impl<S> LoggingMiddleware<S> {
 impl<S, B> Service<Request<B>> for LoggingMiddleware<S>
 where
     S: 'static + Service<Request<B>> + Clone + Send,
-    B: 'static + Send,
+    B: 'static + Send + std::fmt::Debug,
     S::Future: 'static + Send
 {
     type Response = S::Response;
@@ -68,7 +68,9 @@ where
     fn call(&mut self, req: Request<B>) -> Self::Future {
         // TODO
         // Log to file
-        // println!("Logger middleware triggered");
+
+        println!("{:?}", req);
+
         LoggingFuture {
             future: self.inner.call(req),
         }
