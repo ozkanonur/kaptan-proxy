@@ -4,6 +4,10 @@ use std::{convert::Infallible, task::Poll};
 use tower::Service;
 
 #[derive(Clone)]
+/// Middleware service that can route and proxy between
+/// two connections.
+///
+/// (Runs after all the middlewares are executed.)
 pub struct ProxyService {
     pub routes: Option<Vec<RoutesStruct>>,
 }

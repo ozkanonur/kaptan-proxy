@@ -5,6 +5,11 @@ use std::{pin::Pin, task::Poll};
 use tower::Service;
 
 #[pin_project]
+/// Result type of tower implementation of AccessLogService.
+///
+/// Created to avoid of BoxFuture implementation which
+/// causes runtime overhead, or Pinning the Result that causes
+/// inability to use async blocks.
 pub struct LoggingFuture<F> {
     #[pin]
     future: F,
@@ -27,11 +32,18 @@ where
     }
 }
 
+/// Middleware service that can route and proxy between
+/// two connections.
+///
+/// (Runs after all the middlewares are executed.)
 pub struct AccessLogService<S> {
     inner: S,
 }
 
 impl<S> AccessLogService<S> {
+    /// Creates and returns an instance of AccessLogService.
+    ///
+    /// Takes another middleware as an argument.
     pub fn new(inner: S) -> Self {
         Self { inner }
     }
