@@ -23,7 +23,7 @@ impl ThreadModel {
     }
 }
 
-#[derive(Debug, serde::Deserialize)]
+#[derive(Debug, Clone, serde::Deserialize)]
 pub struct Config {
     /// Provides necessary configurations that runtime needs.
     pub runtime: RuntimeConfig,
@@ -31,7 +31,7 @@ pub struct Config {
     pub target: Target,
 }
 
-#[derive(Debug, serde::Deserialize)]
+#[derive(Debug, Clone, serde::Deserialize)]
 pub struct RuntimeConfig {
     /// Specifies the number of threads to run in the runtime.
     ///
@@ -42,12 +42,6 @@ pub struct RuntimeConfig {
     ///
     /// Default: 6150
     pub inbound_port: u32,
-
-    /// Specifies the destination address to which incoming
-    /// requests will proxy.
-    ///
-    /// Default: 127.0.0.1:8080
-    pub outbound_addr: String,
 
     /// Specifies the logging level/profile of the runtime.
     ///
@@ -64,7 +58,7 @@ pub struct RuntimeConfig {
     pub log_level: u8,
 }
 
-#[derive(Debug, serde::Deserialize)]
+#[derive(Debug, Clone, serde::Deserialize)]
 pub struct Target {
     /// Specifies the routes and the address to which they will be proxied.
     ///
@@ -86,7 +80,6 @@ impl Default for Config {
             runtime: RuntimeConfig {
                 worker_threads: 0,
                 inbound_port: 6150,
-                outbound_addr: "127.0.0.1:8080".to_string(),
                 log_level: 0,
             },
             target: Target { routes: None },
