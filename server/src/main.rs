@@ -2,7 +2,10 @@
 #![forbid(unsafe_code)]
 
 use std::convert::Infallible;
+use std::future;
+use std::pin::Pin;
 use std::task::Poll;
+use pin_project::pin_project;
 
 use config_compiler::config::RoutesStruct;
 use config_compiler::{config::Config, Compiler};
@@ -27,22 +30,41 @@ impl<S, B> Service<Request<B>> for LoggerExample<S>
 where
     S: 'static + Service<Request<B>> + Clone + Send,
     B: 'static + Send,
-    S::Future: 'static + Send
+    S::Future: 'static + Send + Unpin
 {
     type Response = S::Response;
 
     type Error = S::Error;
 
-    type Future = futures::future::BoxFuture<'static, Result<Self::Response, Self::Error>>;
+    type Future = LoggingFuture<S::Future>;
 
     fn poll_ready(&mut self, cx: &mut std::task::Context<'_>) -> Poll<Result<(), Self::Error>> {
         self.inner.poll_ready(cx)
     }
 
     fn call(&mut self, req: Request<B>) -> Self::Future {
-        let mut inner = self.inner.clone();
         println!("middleware works {}", req.uri());
-        Box::pin(async move { inner.call(req).await })
+        LoggingFuture{ future: self.inner.call(req)}
+    }
+}
+
+#[pin_project]
+struct LoggingFuture<F> {
+    #[pin]
+    future: F,
+}
+
+impl<F> future::Future for LoggingFuture<F> where F: future::Future {
+    type Output = F::Output;
+
+    fn poll(self: Pin<&mut Self>, cx: &mut std::task::Context<'_>) -> Poll<Self::Output> {
+        let this = self.project();
+        let res = match this.future.poll(cx) {
+            Poll::Ready(res) => res,
+            Poll::Pending => return Poll::Pending,
+        };
+
+        Poll::Ready(res)
     }
 }
 

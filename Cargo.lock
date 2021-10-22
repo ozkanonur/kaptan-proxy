@@ -459,6 +459,7 @@ dependencies = [
  "hyper",
  "logger",
  "num_cpus",
+ "pin-project",
  "tokio",
  "tokio-util",
  "tower",
