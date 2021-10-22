@@ -1,12 +1,36 @@
 # Feature
 - Block/Allow incoming connections (based on request frequency or ip range)
 - Caching
+- Timeout
 
 # Optimization
 
 # Development
 - Write unit tests for current flows
 - Create build/installation script
+
+- Update configuration to the following schema
+
+routes = [
+    {
+        route = "/",
+        target = "http://127.0.0.1:8080",
+        req_headers = [
+            {
+                api-key = "FAJHF1973G37"
+            },
+            {
+                server = None
+            }
+        ],
+        res_headers = [
+            {
+                server = None
+            },
+        ],
+        timeout = 10
+    }
+]
 
 # Other
 - Build a container image and push it to the docker registry
