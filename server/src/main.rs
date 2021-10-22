@@ -20,18 +20,18 @@ fn main() {
     let listen_addr = format_args!("127.0.0.1:{}", config.runtime.inbound_port).to_string();
     runtime::create(&config.runtime).block_on(async move {
         let tcp_listener = TcpListener::bind(listen_addr).await.unwrap();
+        let service_builder = ServiceBuilder::new();
 
         while let Ok((tcp_stream, _)) = tcp_listener.accept().await {
             let routes = routes.clone();
+            let service_builder = service_builder.clone();
 
             tokio::spawn(async move {
                 if let Err(http_err) = Http::new()
                     .http1_keep_alive(true)
                     .serve_connection(
                         tcp_stream,
-                        ServiceBuilder::new().service(ProxyService {
-                            routes
-                        }),
+                        service_builder.service(ProxyService { routes: &routes }),
                     )
                     .await
                 {
@@ -42,11 +42,11 @@ fn main() {
     });
 }
 
-struct ProxyService {
-    routes: Option<Vec<RoutesStruct>>,
+struct ProxyService<'a> {
+    routes: &'a Option<Vec<RoutesStruct>>,
 }
 
-impl Service<Request<Body>> for ProxyService {
+impl Service<Request<Body>> for ProxyService<'_> {
     type Response = Response<Body>;
     type Error = Infallible;
     type Future = futures::future::BoxFuture<'static, Result<Self::Response, Self::Error>>;
