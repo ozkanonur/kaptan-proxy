@@ -53,7 +53,7 @@ impl<S, B> Service<Request<B>> for AccessLogService<S>
 where
     S: 'static + Service<Request<B>> + Clone + Send,
     B: 'static + Send,
-    S::Future: 'static + Send + Unpin,
+    S::Future: 'static + Send
 {
     type Response = S::Response;
 
