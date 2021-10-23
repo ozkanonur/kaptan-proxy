@@ -1,10 +1,9 @@
 use futures::future::Future;
 use hyper::Request;
 use pin_project::pin_project;
-use std::{pin::Pin, task::Poll};
+use std::{fs::File, pin::Pin, task::Poll};
 use tower::Service;
 use std::io::Write;
-use std::io::File;
 
 #[pin_project]
 /// Result type of tower implementation of LoggingMiddleware.
