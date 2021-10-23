@@ -4,13 +4,19 @@ use std::fmt::Debug;
 use std::fs::OpenOptions;
 use std::io::Write;
 
-pub struct AccessLog<'a, S> {
-    pub request: &'a S,
+pub struct AccessLog<'a, X, Y, Z, T> {
+    pub method: &'a X,
+    pub uri: &'a Y,
+    pub version: &'a Z,
+    pub headers: &'a T,
 }
 
-impl<S> LogCapabilities for AccessLog<'_, S>
+impl<X, Y, Z, T> LogCapabilities for AccessLog<'_, X, Y, Z, T>
 where
-    S: Debug,
+    X: Debug,
+    Y: Debug,
+    Z: Debug,
+    T: Debug,
 {
     fn write(&self) {
         let mut log_file = OpenOptions::new()
@@ -23,9 +29,12 @@ where
         let mut formatted_bytes = Vec::new();
         writeln!(
             &mut formatted_bytes,
-            "{} -> {:?}",
+            "{{\"_time\": \"{}\", \"method\": \"{:?}\", \"uri\": \"{:?}\", \"version\": \"{:?}\", \"headers\": {:?}}}",
             Local::now().naive_local(),
-            self.request
+            self.method,
+            self.uri,
+            self.version,
+            self.headers
         )
         .unwrap();
 

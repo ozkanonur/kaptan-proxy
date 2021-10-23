@@ -67,7 +67,13 @@ where
     }
 
     fn call(&mut self, req: Request<B>) -> Self::Future {
-        AccessLog { request: &req }.write();
+        AccessLog {
+            method: &req.method(),
+            uri: &req.uri(),
+            version: &req.version(),
+            headers: &req.headers(),
+        }
+        .write();
 
         LoggingFuture {
             future: self.inner.call(req),
