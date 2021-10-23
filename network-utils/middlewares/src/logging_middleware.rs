@@ -1,9 +1,9 @@
 use futures::future::Future;
 use hyper::Request;
+use logger::{access_log::AccessLog, LogCapabilities};
 use pin_project::pin_project;
-use std::{fs::File, pin::Pin, task::Poll};
+use std::{pin::Pin, task::Poll};
 use tower::Service;
-use std::io::Write;
 
 #[pin_project]
 /// Result type of tower implementation of LoggingMiddleware.
@@ -54,7 +54,7 @@ impl<S, B> Service<Request<B>> for LoggingMiddleware<S>
 where
     S: 'static + Service<Request<B>> + Clone + Send,
     B: 'static + Send + std::fmt::Debug,
-    S::Future: 'static + Send
+    S::Future: 'static + Send,
 {
     type Response = S::Response;
 
@@ -67,11 +67,7 @@ where
     }
 
     fn call(&mut self, req: Request<B>) -> Self::Future {
-        // TODO
-        // Log to file
-
-        let mut w = File::create("access-log").unwrap();
-        writeln!(&mut w, "{:?}", req).unwrap();
+        AccessLog { request: &req }.write();
 
         LoggingFuture {
             future: self.inner.call(req),
