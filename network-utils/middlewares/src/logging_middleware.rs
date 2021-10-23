@@ -3,6 +3,8 @@ use hyper::Request;
 use pin_project::pin_project;
 use std::{pin::Pin, task::Poll};
 use tower::Service;
+use std::io::Write;
+use std::io::File;
 
 #[pin_project]
 /// Result type of tower implementation of LoggingMiddleware.
@@ -69,7 +71,8 @@ where
         // TODO
         // Log to file
 
-        println!("{:?}", req);
+        let mut w = File::create("access-log").unwrap();
+        writeln!(&mut w, "{:?}", req).unwrap();
 
         LoggingFuture {
             future: self.inner.call(req),
