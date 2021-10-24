@@ -1,37 +1,9 @@
-use futures::future::Future;
 use hyper::Request;
 use logger::{access_log::AccessLog, LogCapabilities};
-use pin_project::pin_project;
-use std::{pin::Pin, task::Poll};
+use std::task::Poll;
 use tower::Service;
 
-#[pin_project]
-/// Result type of tower implementation of LoggingMiddleware.
-///
-/// Created to avoid of BoxFuture implementation which
-/// causes runtime overhead, or Pinning the Result that causes
-/// inability to use async blocks.
-pub struct LoggingFuture<F> {
-    #[pin]
-    future: F,
-}
-
-impl<F> Future for LoggingFuture<F>
-where
-    F: Future,
-{
-    type Output = F::Output;
-
-    fn poll(self: Pin<&mut Self>, cx: &mut std::task::Context<'_>) -> Poll<Self::Output> {
-        let this = self.project();
-        let res = match this.future.poll(cx) {
-            Poll::Ready(res) => res,
-            Poll::Pending => return Poll::Pending,
-        };
-
-        Poll::Ready(res)
-    }
-}
+use crate::MiddlewareFuture;
 
 /// Middleware service that can route and proxy between
 /// two connections.
@@ -60,7 +32,7 @@ where
 
     type Error = S::Error;
 
-    type Future = LoggingFuture<S::Future>;
+    type Future = MiddlewareFuture<S::Future>;
 
     fn poll_ready(&mut self, cx: &mut std::task::Context<'_>) -> Poll<Result<(), Self::Error>> {
         self.inner.poll_ready(cx)
@@ -75,7 +47,7 @@ where
         }
         .write();
 
-        LoggingFuture {
+        MiddlewareFuture {
             future: self.inner.call(req),
         }
     }
