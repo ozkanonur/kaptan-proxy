@@ -1,5 +1,5 @@
 use config_compiler::config::RoutesStruct;
-use hyper::{Body, Client, Request, Response};
+use hyper::{header::HeaderName, Body, Client, Request, Response};
 use std::{convert::Infallible, task::Poll};
 use tower::Service;
 
@@ -25,19 +25,20 @@ impl Service<Request<Body>> for ProxyService {
     }
 
     fn call(&mut self, mut req: Request<Body>) -> Self::Future {
-        let routes_ref = self.routes.as_ref();
-        let mut target;
+        let routes = self.routes.clone();
 
-        let mut index = routes_ref.unwrap().iter().position(|r| {
-            r.route == req.uri().to_string() || r.route.to_owned() + "/" == req.uri().to_string()
+        // Routing
+        let mut target;
+        let mut index = routes.as_ref().unwrap().iter().position(|r| {
+            r.inbound_route == req.uri().to_string() || r.inbound_route.to_owned() + "/" == req.uri().to_string()
         });
 
         if index.is_some() {
-            target = routes_ref.unwrap()[index.unwrap()].target.to_string();
+            target = routes.as_ref().unwrap()[index.unwrap()].dest_addr.to_string();
         } else {
-            index = routes_ref.unwrap().iter().position(|r| r.route == "/");
+            index = routes.as_ref().unwrap().iter().position(|r| r.inbound_route == "/");
             // TODO: log error if no route exists
-            target = routes_ref.unwrap()[index.unwrap()].target.to_string();
+            target = routes.as_ref().unwrap()[index.unwrap()].dest_addr.to_string();
             target.push_str(&req.uri().to_string());
         }
 
@@ -45,17 +46,35 @@ impl Service<Request<Body>> for ProxyService {
             target.push('/');
         }
 
-        // TODO
-        // Header manipulation on request
-        // req.headers_mut().insert("Example-Header", "Here it is".parse().unwrap());
+        // Request header manipulation
+        routes.as_ref().unwrap()[index.unwrap()]
+            .req_headers
+            .iter()
+            .flatten()
+            .for_each(|header| {
+                req.headers_mut().insert(
+                    HeaderName::from_bytes(header.key.as_bytes()).unwrap(),
+                    header.value.parse().unwrap(),
+                );
+            });
 
         Box::pin(async move {
             let client = Client::new();
             *req.uri_mut() = target.parse().unwrap();
-            let res = client.request(req).await.unwrap();
-            // TODO
-            // Header manipulation on response
-            // res.headers_mut().insert("Example-Header", "Here it is".parse().unwrap());
+            let mut res = client.request(req).await.unwrap();
+
+            // Response header manipulation
+            routes.as_ref().unwrap()[index.unwrap()]
+                .res_headers
+                .iter()
+                .flatten()
+                .for_each(|header| {
+                    res.headers_mut().insert(
+                        HeaderName::from_bytes(header.key.as_bytes()).unwrap(),
+                        header.value.parse().unwrap(),
+                    );
+                });
+
             Ok(res)
         })
     }
