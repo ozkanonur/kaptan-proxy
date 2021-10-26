@@ -37,7 +37,7 @@ log_level = 1
 # dest_addr = "http://127.0.0.1:5000"
 #
 # If you want to exclude headers from request or response, you can
-# simply copy the following usage:
+# simply ignore defining the 'key' as the following example:
 #
 # for request headers:
 # [[proxy.req_headers]]

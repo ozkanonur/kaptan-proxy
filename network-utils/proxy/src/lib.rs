@@ -7,4 +7,4 @@ pub mod service;
 
 /// Serialized json schema of 404 pages
 const NOT_FOUND_BODY: &str =
-    "{ \"description\": \"The requested route could not be found.\", \"from\": \"kaptan\" }";
+    "{ \"from\": \"kaptan\", \"description\": \"The requested route could not be found.\" }";
