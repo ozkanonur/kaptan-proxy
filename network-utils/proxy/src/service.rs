@@ -10,7 +10,7 @@ use tower::Service;
 ///
 /// (Runs after all the middlewares are executed.)
 pub struct ProxyService {
-    pub routes: Option<Vec<RoutesStruct>>,
+    pub routes: Vec<RoutesStruct>,
 }
 
 impl Service<Request<Body>> for ProxyService {
@@ -26,19 +26,17 @@ impl Service<Request<Body>> for ProxyService {
     }
 
     fn call(&mut self, mut req: Request<Body>) -> Self::Future {
-        let routes = self.routes.as_ref().unwrap();
-
         // Routing
         let mut target;
-        let mut index = routes.iter().position(|r| {
+        let mut index = self.routes.iter().position(|r| {
             r.inbound_route == req.uri().to_string()
                 || r.inbound_route.to_owned() + "/" == req.uri().to_string()
         });
 
         if index.is_some() {
-            target = routes[index.unwrap()].dest_addr.to_string();
+            target = self.routes[index.unwrap()].dest_addr.to_string();
         } else {
-            index = routes.iter().position(|r| r.inbound_route == "/");
+            index = self.routes.iter().position(|r| r.inbound_route == "/");
 
             // Return 404 if requested route doesn't exists
             if index.is_none() {
@@ -53,7 +51,7 @@ impl Service<Request<Body>> for ProxyService {
                 });
             }
 
-            target = routes[index.unwrap()].dest_addr.to_string();
+            target = self.routes[index.unwrap()].dest_addr.to_string();
             target.push_str(&req.uri().to_string());
         }
 
@@ -63,7 +61,7 @@ impl Service<Request<Body>> for ProxyService {
         let index = index.unwrap();
 
         // Request header manipulation
-        routes[index]
+        self.routes[index]
             .req_headers
             .iter()
             .flatten()
@@ -78,7 +76,7 @@ impl Service<Request<Body>> for ProxyService {
                 }
             });
 
-        let res_headers = routes[index].res_headers.clone();
+        let res_headers = self.routes[index].res_headers.clone();
         Box::pin(async move {
             let client = Client::new();
             *req.uri_mut() = target.parse().unwrap();
