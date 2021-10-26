@@ -4,8 +4,7 @@ version = "0.1.0"
 edition = "2018"
 
 [features]
-concurrency = ["tokio/rt-multi-thread", "num_cpus"]
-default = ["concurrency"]
+default = ["tokio/rt-multi-thread", "num_cpus"]
 
 [dependencies]
 config-compiler = { path = "../config-compiler" }

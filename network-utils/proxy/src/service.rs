@@ -26,25 +26,19 @@ impl Service<Request<Body>> for ProxyService {
     }
 
     fn call(&mut self, mut req: Request<Body>) -> Self::Future {
-        let routes = self.routes.clone();
+        let routes = self.routes.as_ref().unwrap();
 
         // Routing
         let mut target;
-        let mut index = routes.as_ref().unwrap().iter().position(|r| {
+        let mut index = routes.iter().position(|r| {
             r.inbound_route == req.uri().to_string()
                 || r.inbound_route.to_owned() + "/" == req.uri().to_string()
         });
 
         if index.is_some() {
-            target = routes.as_ref().unwrap()[index.unwrap()]
-                .dest_addr
-                .to_string();
+            target = routes[index.unwrap()].dest_addr.to_string();
         } else {
-            index = routes
-                .as_ref()
-                .unwrap()
-                .iter()
-                .position(|r| r.inbound_route == "/");
+            index = routes.iter().position(|r| r.inbound_route == "/");
 
             // Return 404 if requested route doesn't exists
             if index.is_none() {
@@ -59,18 +53,17 @@ impl Service<Request<Body>> for ProxyService {
                 });
             }
 
-            target = routes.as_ref().unwrap()[index.unwrap()]
-                .dest_addr
-                .to_string();
+            target = routes[index.unwrap()].dest_addr.to_string();
             target.push_str(&req.uri().to_string());
         }
 
         if target.chars().last() != Some('/') {
             target.push('/');
         }
+        let index = index.unwrap();
 
         // Request header manipulation
-        routes.as_ref().unwrap()[index.unwrap()]
+        routes[index]
             .req_headers
             .iter()
             .flatten()
@@ -85,26 +78,23 @@ impl Service<Request<Body>> for ProxyService {
                 }
             });
 
+        let res_headers = routes[index].res_headers.clone();
         Box::pin(async move {
             let client = Client::new();
             *req.uri_mut() = target.parse().unwrap();
             let mut res = client.request(req).await.unwrap();
 
             // Response header manipulation
-            routes.as_ref().unwrap()[index.unwrap()]
-                .res_headers
-                .iter()
-                .flatten()
-                .for_each(|header| {
-                    if header.value.is_some() {
-                        res.headers_mut().insert(
-                            HeaderName::from_bytes(header.key.as_bytes()).unwrap(),
-                            header.value.as_ref().unwrap().parse().unwrap(),
-                        );
-                    } else {
-                        res.headers_mut().remove(&header.key);
-                    }
-                });
+            res_headers.iter().flatten().for_each(|header| {
+                if header.value.is_some() {
+                    res.headers_mut().insert(
+                        HeaderName::from_bytes(header.key.as_bytes()).unwrap(),
+                        header.value.as_ref().unwrap().parse().unwrap(),
+                    );
+                } else {
+                    res.headers_mut().remove(&header.key);
+                }
+            });
 
             Ok(res)
         })
