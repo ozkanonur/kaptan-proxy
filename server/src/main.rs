@@ -12,7 +12,7 @@ mod runtime;
 
 fn main() {
     let config = Config::read_from_fs();
-    let routes = config.target.routes.clone();
+    let routes = config.proxy.clone();
     let listen_addr = format_args!("127.0.0.1:{}", config.runtime.inbound_port).to_string();
 
     runtime::create(&config.runtime).block_on(async move {

@@ -1,11 +1,93 @@
+
+##########################################################################################################
+#                                                                                                        #
+#                                                                                                        #
+#    ██╗  ██╗ █████╗ ██████╗ ████████╗ █████╗ ███╗   ██╗    ██████╗ ██████╗  ██████╗ ██╗  ██╗██╗   ██╗   #
+#    ██║ ██╔╝██╔══██╗██╔══██╗╚══██╔══╝██╔══██╗████╗  ██║    ██╔══██╗██╔══██╗██╔═══██╗╚██╗██╔╝╚██╗ ██╔╝   #
+#    █████╔╝ ███████║██████╔╝   ██║   ███████║██╔██╗ ██║    ██████╔╝██████╔╝██║   ██║ ╚███╔╝  ╚████╔╝    #
+#    ██╔═██╗ ██╔══██║██╔═══╝    ██║   ██╔══██║██║╚██╗██║    ██╔═══╝ ██╔══██╗██║   ██║ ██╔██╗   ╚██╔╝     #
+#    ██║  ██╗██║  ██║██║        ██║   ██║  ██║██║ ╚████║    ██║     ██║  ██║╚██████╔╝██╔╝ ██╗   ██║      #
+#    ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝        ╚═╝   ╚═╝  ╚═╝╚═╝  ╚═══╝    ╚═╝     ╚═╝  ╚═╝ ╚═════╝ ╚═╝  ╚═╝   ╚═╝      #
+#                                                                                                        #
+##########################################################################################################
+
+# License & descriptions..
+
+
+##############################
+#   RUNTIME CONFIGURATIONS   #
+##############################
 [runtime]
 worker_threads = 0
 inbound_port = 6150
 log_level = 1
 
-[target]
-routes = [
-	{ route = "/", target = "http://127.0.0.1:8080" },
-	{ route = "/abc", target = "http://127.0.0.1:8080/Downloads" }
-]
+# Proxy definitions can be specified as a list.
+# e.g.,
+# [[proxy]]
+# inbound_route = "/"
+# dest_addr = "http://127.0.0.1:8080"
+#
+# [[proxy]]
+# inbound_route = "/node-api"
+# dest_addr = "http://127.0.0.1:3000"
+#
+# [[proxy]]
+# inbound_route = "/dotnet-api"
+# dest_addr = "http://127.0.0.1:5000"
+#
+# If you want to exclude headers from request or response, you can
+# simply ignore defining the 'key' as the following example:
+#
+# for request headers:
+# [[proxy.req_headers]]
+# key = "header-key-to-remove"
+#
+# for response headers
+# [[proxy.res_headers]]
+# key = "header-key-to-remove"
+#
+
+##############################
+#   PROXY DEFINITIONS        #
+##############################
+[[proxy]]
+inbound_route = "/"
+dest_addr = "http://127.0.0.1:8080"
+
+[[proxy.req_headers]]
+key = "request-header-1"
+value = "request-header-value-1"
+
+[[proxy.req_headers]]
+key = "request-header-2"
+value = "request-header-value-2"
+
+[[proxy.req_headers]]
+key = "request-header-3"
+value = "request-header-value-3"
+
+[[proxy.res_headers]]
+key = "response-header-1"
+value = "response-header-value-1"
+
+[[proxy.res_headers]]
+key = "response-header-2"
+value = "response-header-value-2"
+
+[[proxy.res_headers]]
+key = "response-header-3"
+value = "response-header-value-3"
+
+[[proxy]]
+inbound_route = "/spesific-route"
+dest_addr = "http://127.0.0.1:8080/Downloads"
+
+[[proxy.req_headers]]
+key = "api-key"
+value = "17158bf9b9a727cbe0c2e91381339090"
+
+[[proxy.res_headers]]
+key = "auth-token"
+value = "0b9164bc0ee8b5303bb0c01853939e9ddd6e5853"
 

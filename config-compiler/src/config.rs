@@ -28,7 +28,7 @@ pub struct Config {
     /// Provides necessary configurations that runtime needs.
     pub runtime: RuntimeConfig,
     /// Defines list of routes with their spesific destination addresses.
-    pub target: Target,
+    pub proxy: Option<Vec<RoutesStruct>>,
 }
 
 #[derive(Debug, Clone, serde::Deserialize)]
@@ -59,19 +59,23 @@ pub struct RuntimeConfig {
 }
 
 #[derive(Debug, Clone, serde::Deserialize)]
-pub struct Target {
-    /// Specifies the routes and the address to which they will be proxied.
-    ///
-    /// Default: None
-    pub routes: Option<Vec<RoutesStruct>>,
+pub struct RoutesStruct {
+    /// Route that will proxy to destionation address.
+    pub inbound_route: String,
+    /// Target that will be proxied from the specified route.
+    pub dest_addr: String,
+    /// Header list that will be sent to the destination address.
+    pub req_headers: Option<Vec<HeaderStruct>>,
+    /// Header list that will be added in the response of destination address.
+    pub res_headers: Option<Vec<HeaderStruct>>
 }
 
 #[derive(Debug, Clone, serde::Deserialize)]
-pub struct RoutesStruct {
-    /// Route that will proxy to destionation address.
-    pub route: String,
-    /// Target that will be proxied from the specified route.
-    pub target: String,
+pub struct HeaderStruct {
+    /// Header key
+    pub key: String,
+    /// Header Value
+    pub value: Option<String>,
 }
 
 impl Default for Config {
@@ -82,7 +86,7 @@ impl Default for Config {
                 inbound_port: 6150,
                 log_level: 0,
             },
-            target: Target { routes: None },
+            proxy: None,
         }
     }
 }
