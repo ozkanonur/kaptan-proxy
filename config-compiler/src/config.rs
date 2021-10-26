@@ -75,7 +75,7 @@ pub struct HeaderStruct {
     /// Header key
     pub key: String,
     /// Header Value
-    pub value: String,
+    pub value: Option<String>,
 }
 
 impl Default for Config {

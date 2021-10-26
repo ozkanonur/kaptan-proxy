@@ -1,6 +1,7 @@
 use config_compiler::config::RoutesStruct;
-use hyper::{header::HeaderName, Body, Client, Request, Response};
-use std::{convert::Infallible, task::Poll};
+use futures::Future;
+use hyper::{header::HeaderName, Body, Client, Request, Response, StatusCode};
+use std::{convert::Infallible, pin::Pin, task::Poll};
 use tower::Service;
 
 #[derive(Clone)]
@@ -15,7 +16,7 @@ pub struct ProxyService {
 impl Service<Request<Body>> for ProxyService {
     type Response = Response<Body>;
     type Error = Infallible;
-    type Future = futures::future::BoxFuture<'static, Result<Self::Response, Self::Error>>;
+    type Future = Pin<Box<dyn Future<Output = Result<Self::Response, Self::Error>> + Send>>;
 
     fn poll_ready(
         &mut self,
@@ -30,15 +31,37 @@ impl Service<Request<Body>> for ProxyService {
         // Routing
         let mut target;
         let mut index = routes.as_ref().unwrap().iter().position(|r| {
-            r.inbound_route == req.uri().to_string() || r.inbound_route.to_owned() + "/" == req.uri().to_string()
+            r.inbound_route == req.uri().to_string()
+                || r.inbound_route.to_owned() + "/" == req.uri().to_string()
         });
 
         if index.is_some() {
-            target = routes.as_ref().unwrap()[index.unwrap()].dest_addr.to_string();
+            target = routes.as_ref().unwrap()[index.unwrap()]
+                .dest_addr
+                .to_string();
         } else {
-            index = routes.as_ref().unwrap().iter().position(|r| r.inbound_route == "/");
-            // TODO: log error if no route exists
-            target = routes.as_ref().unwrap()[index.unwrap()].dest_addr.to_string();
+            index = routes
+                .as_ref()
+                .unwrap()
+                .iter()
+                .position(|r| r.inbound_route == "/");
+
+            // Return 404 if requested route doesn't exists
+            if index.is_none() {
+                return Box::pin(async {
+                    let mut res = Response::new(Body::from(super::NOT_FOUND_BODY));
+
+                    *res.status_mut() = StatusCode::NOT_FOUND;
+                    res.headers_mut()
+                        .insert("content-type", "application/json".parse().unwrap());
+
+                    return Ok(res);
+                });
+            }
+
+            target = routes.as_ref().unwrap()[index.unwrap()]
+                .dest_addr
+                .to_string();
             target.push_str(&req.uri().to_string());
         }
 
@@ -52,10 +75,14 @@ impl Service<Request<Body>> for ProxyService {
             .iter()
             .flatten()
             .for_each(|header| {
-                req.headers_mut().insert(
-                    HeaderName::from_bytes(header.key.as_bytes()).unwrap(),
-                    header.value.parse().unwrap(),
-                );
+                if header.value.is_some() {
+                    req.headers_mut().insert(
+                        HeaderName::from_bytes(header.key.as_bytes()).unwrap(),
+                        header.value.as_ref().unwrap().parse().unwrap(),
+                    );
+                } else {
+                    req.headers_mut().remove(&header.key);
+                }
             });
 
         Box::pin(async move {
@@ -69,10 +96,14 @@ impl Service<Request<Body>> for ProxyService {
                 .iter()
                 .flatten()
                 .for_each(|header| {
-                    res.headers_mut().insert(
-                        HeaderName::from_bytes(header.key.as_bytes()).unwrap(),
-                        header.value.parse().unwrap(),
-                    );
+                    if header.value.is_some() {
+                        res.headers_mut().insert(
+                            HeaderName::from_bytes(header.key.as_bytes()).unwrap(),
+                            header.value.as_ref().unwrap().parse().unwrap(),
+                        );
+                    } else {
+                        res.headers_mut().remove(&header.key);
+                    }
                 });
 
             Ok(res)

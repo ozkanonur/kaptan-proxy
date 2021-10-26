@@ -35,6 +35,18 @@ log_level = 1
 # [[proxy]]
 # inbound_route = "/dotnet-api"
 # dest_addr = "http://127.0.0.1:5000"
+#
+# If you want to exclude headers from request or response, you can
+# simply copy the following usage:
+#
+# for request headers:
+# [[proxy.req_headers]]
+# key = "header-key-to-remove"
+#
+# for response headers
+# [[proxy.res_headers]]
+# key = "header-key-to-remove"
+#
 
 ##############################
 #   PROXY DEFINITIONS        #
