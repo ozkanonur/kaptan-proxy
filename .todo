@@ -2,6 +2,7 @@
 - Block/Allow incoming connections (based on request frequency or ip range)
 - Caching
 - Timeout
+- Request metrics
 
 # Optimization
 
