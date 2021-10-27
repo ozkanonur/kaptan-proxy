@@ -1,13 +1,16 @@
 #![forbid(unsafe_code)]
 
 use config_compiler::{config::Config, Compiler};
+use jemallocator::Jemalloc;
 use middlewares::logging_middleware::LoggingMiddleware;
-
 use proxy::{service::ProxyService, Http, ServiceBuilder};
-
 use tokio::net::TcpListener;
 
 mod runtime;
+
+#[cfg(all(target_os = "linux", target_arch = "x86_64", target_env = "gnu"))]
+#[global_allocator]
+static GLOBAL: Jemalloc = Jemalloc;
 
 fn main() {
     let config = Config::read_from_fs();
