@@ -24,9 +24,7 @@ impl<S> LoggingMiddleware<S> {
 
 impl<S, B> Service<Request<B>> for LoggingMiddleware<S>
 where
-    S: 'static + Service<Request<B>> + Clone + Send,
-    B: 'static + Send + std::fmt::Debug,
-    S::Future: 'static + Send,
+    S: Service<Request<B>>,
 {
     type Response = S::Response;
 
