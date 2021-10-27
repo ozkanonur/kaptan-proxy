@@ -2,6 +2,8 @@
 FROM docker.io/library/rust:1.55 as builder
 WORKDIR /usr/src/kaptan-proxy
 COPY . .
+
+ENV JEMALLOC_SYS_WITH_MALLOC = "background_thread:true,narenas:1,tcache:false,dirty_decay_ms:0,muzzy_decay_ms:0,metadata_thp:auto"
 RUN cargo install --path server
 
 # Runtime
