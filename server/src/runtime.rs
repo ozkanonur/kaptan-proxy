@@ -1,21 +1,8 @@
 use config_compiler::config::*;
 use tokio::runtime::{Builder, Runtime};
 
-#[cfg(not(feature = "concurrency"))]
-/// - Creates and returns a single-threaded instance of tokio::runtime::Runtime.
-/// - Will be used compiled only if the 'concurrency' feature is disabled.
-pub(crate) fn create(_: &Config) -> Runtime {
-    Builder::new_current_thread()
-        .enable_all()
-        .thread_name("proxy_thread_space")
-        .build()
-        .expect("An unexpected error has occurred on creating single-thread runtime.")
-}
-
-#[cfg(feature = "concurrency")]
 /// - Creates and returns an instance of tokio::runtime::Runtime.
 /// - Size of Thread Pool is determined by given RuntimeConfig.
-/// - Will be compiled only if the 'concurrency' feature is enabled.
 pub(crate) fn create(config: &RuntimeConfig) -> Runtime {
     let cpus = num_cpus::get();
 

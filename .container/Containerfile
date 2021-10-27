@@ -1,0 +1,14 @@
+# Compilation
+FROM docker.io/library/rust:1.55 as builder
+WORKDIR /usr/src/kaptan-proxy
+COPY . .
+RUN cargo install --path server
+
+# Runtime
+FROM docker.io/library/debian:buster-slim
+## Copy default configuration file
+RUN mkdir /etc/kaptan-proxy
+COPY .container/cfg.toml /etc/kaptan-proxy
+
+COPY --from=builder /usr/local/cargo/bin/server /usr/local/bin/kaptan-proxy
+CMD ["kaptan-proxy"]

@@ -4,13 +4,15 @@ use hyper::{header::HeaderName, Body, Client, Request, Response, StatusCode};
 use std::{convert::Infallible, pin::Pin, task::Poll};
 use tower::Service;
 
+use crate::router::RouterService;
+
 #[derive(Clone)]
 /// Middleware service that can route and proxy between
 /// two connections.
 ///
 /// (Runs after all the middlewares are executed.)
 pub struct ProxyService {
-    pub routes: Option<Vec<RoutesStruct>>,
+    pub routes: Vec<RoutesStruct>,
 }
 
 impl Service<Request<Body>> for ProxyService {
@@ -26,85 +28,49 @@ impl Service<Request<Body>> for ProxyService {
     }
 
     fn call(&mut self, mut req: Request<Body>) -> Self::Future {
-        let routes = self.routes.clone();
+        let route_dependencies = RouterService {}.get_dependencies(req.uri().to_string(), &self.routes);
 
-        // Routing
-        let mut target;
-        let mut index = routes.as_ref().unwrap().iter().position(|r| {
-            r.inbound_route == req.uri().to_string()
-                || r.inbound_route.to_owned() + "/" == req.uri().to_string()
-        });
+        // Return 404 if route doesn't exists
+        if route_dependencies.dest_addr.is_empty() {
+            return Box::pin(async {
+                let mut res = Response::new(Body::from(super::NOT_FOUND_BODY));
 
-        if index.is_some() {
-            target = routes.as_ref().unwrap()[index.unwrap()]
-                .dest_addr
-                .to_string();
-        } else {
-            index = routes
-                .as_ref()
-                .unwrap()
-                .iter()
-                .position(|r| r.inbound_route == "/");
+                *res.status_mut() = StatusCode::NOT_FOUND;
+                res.headers_mut()
+                    .insert("content-type", "application/json".parse().unwrap());
 
-            // Return 404 if requested route doesn't exists
-            if index.is_none() {
-                return Box::pin(async {
-                    let mut res = Response::new(Body::from(super::NOT_FOUND_BODY));
-
-                    *res.status_mut() = StatusCode::NOT_FOUND;
-                    res.headers_mut()
-                        .insert("content-type", "application/json".parse().unwrap());
-
-                    return Ok(res);
-                });
-            }
-
-            target = routes.as_ref().unwrap()[index.unwrap()]
-                .dest_addr
-                .to_string();
-            target.push_str(&req.uri().to_string());
-        }
-
-        if target.chars().last() != Some('/') {
-            target.push('/');
+                return Ok(res);
+            });
         }
 
         // Request header manipulation
-        routes.as_ref().unwrap()[index.unwrap()]
-            .req_headers
-            .iter()
-            .flatten()
-            .for_each(|header| {
+        route_dependencies.req_headers.iter().flatten().for_each(|header| {
+            if header.value.is_some() {
+                req.headers_mut().insert(
+                    HeaderName::from_bytes(header.key.as_bytes()).unwrap(),
+                    header.value.as_ref().unwrap().parse().unwrap(),
+                );
+            } else {
+                req.headers_mut().remove(&header.key);
+            }
+        });
+
+        Box::pin(async move {
+            let client = Client::new();
+            *req.uri_mut() = route_dependencies.dest_addr.parse().unwrap();
+            let mut res = client.request(req).await.unwrap();
+
+            // Response header manipulation
+            route_dependencies.res_headers.iter().flatten().for_each(|header| {
                 if header.value.is_some() {
-                    req.headers_mut().insert(
+                    res.headers_mut().insert(
                         HeaderName::from_bytes(header.key.as_bytes()).unwrap(),
                         header.value.as_ref().unwrap().parse().unwrap(),
                     );
                 } else {
-                    req.headers_mut().remove(&header.key);
+                    res.headers_mut().remove(&header.key);
                 }
             });
-
-        Box::pin(async move {
-            let client = Client::new();
-            *req.uri_mut() = target.parse().unwrap();
-            let mut res = client.request(req).await.unwrap();
-
-            // Response header manipulation
-            routes.as_ref().unwrap()[index.unwrap()]
-                .res_headers
-                .iter()
-                .flatten()
-                .for_each(|header| {
-                    if header.value.is_some() {
-                        res.headers_mut().insert(
-                            HeaderName::from_bytes(header.key.as_bytes()).unwrap(),
-                            header.value.as_ref().unwrap().parse().unwrap(),
-                        );
-                    } else {
-                        res.headers_mut().remove(&header.key);
-                    }
-                });
 
             Ok(res)
         })
