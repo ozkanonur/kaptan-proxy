@@ -6,6 +6,7 @@ edition = "2018"
 [dependencies]
 pin-project = "1.0.8"
 logger = { path = "../../logger" }
+config-compiler = { path = "../../config-compiler" }
 tower = { version = "0.4.10", default-features = false }
 futures = { version = "0.3.0", default-features = false }
 hyper = { version = "0.14.13", features = ["http1", "http2"], default-features = false  }
