@@ -1,4 +1,3 @@
-#![warn(rust_2018_idioms)]
 #![forbid(unsafe_code)]
 
 use config_compiler::{config::Config, Compiler};
