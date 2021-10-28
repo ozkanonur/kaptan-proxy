@@ -1,16 +1,29 @@
 # Compilation
-FROM docker.io/library/rust:1.55 as builder
+FROM docker.io/library/debian:bullseye-slim as build
 WORKDIR /usr/src/kaptan-proxy
-COPY . .
 
-ENV JEMALLOC_SYS_WITH_MALLOC = "background_thread:true,narenas:1,tcache:false,dirty_decay_ms:0,muzzy_decay_ms:0,metadata_thp:auto"
-RUN cargo install --path server
+# Get Rust
+RUN apt-get update \
+	&& apt-get install -y build-essential curl \
+	&& rm -rf /var/lib/apt/lists/*
+RUN curl https://sh.rustup.rs -sSf | bash -s -- -y
+ENV PATH="/root/.cargo/bin:${PATH}"
+
+## Jemalloc flags
+ENV JEMALLOC_SYS_WITH_MALLOC_CONF="background_thread:true,narenas:1,tcache:false,dirty_decay_ms:0,muzzy_decay_ms:0,metadata_thp:auto"
+
+COPY . .
+RUN cargo build --release
 
 # Runtime
-FROM docker.io/library/debian:buster-slim
+FROM docker.io/library/debian:bullseye-slim
+
 ## Copy default configuration file
 RUN mkdir /etc/kaptan-proxy
 COPY .container/cfg.toml /etc/kaptan-proxy
 
-COPY --from=builder /usr/local/cargo/bin/server /usr/local/bin/kaptan-proxy
+## Get binary
+COPY --from=build /usr/src/kaptan-proxy/target/release/server /usr/local/bin/kaptan-proxy
+
+## Start the app
 CMD ["kaptan-proxy"]

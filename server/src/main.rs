@@ -23,14 +23,14 @@ fn main() {
 
         while let Ok((tcp_stream, _)) = tcp_listener.accept().await {
             let routes = routes.clone();
-            let service_builder = service_builder.clone();
+            let service = service_builder.service(LoggingMiddleware::new(ProxyService { routes }));
 
             tokio::spawn(async move {
                 if let Err(http_err) = Http::new()
                     .http1_keep_alive(true)
                     .serve_connection(
                         tcp_stream,
-                        service_builder.service(LoggingMiddleware::new(ProxyService { routes })),
+                        service
                     )
                     .await
                 {
