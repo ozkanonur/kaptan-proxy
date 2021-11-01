@@ -43,3 +43,27 @@ where
             .expect("Panic raised while writing access log to the file.");
     }
 }
+
+#[test]
+fn test_write() {
+    #[derive(Debug)]
+    pub struct HeaderMock {
+        pub key: String,
+        pub value: Option<String>,
+    }
+
+    let mut headers: Vec<HeaderMock> = Vec::new();
+
+    headers.push(HeaderMock {
+        key: "host".to_string(),
+        value: Some("127.0.0.1".to_string())
+    });
+
+    AccessLog {
+        method: &"GET",
+        uri: &"/test/write",
+        version: &"HTTP/1.1",
+        headers: &headers,
+    }
+    .write();
+}

@@ -17,7 +17,7 @@ fn main() {
     let routes = config.proxy.clone().unwrap();
     let listen_addr = format_args!("127.0.0.1:{}", config.runtime.inbound_port).to_string();
 
-    runtime::create(&config.runtime).block_on(async move {
+    runtime::create(&config.runtime.worker_threads).block_on(async move {
         let tcp_listener = TcpListener::bind(listen_addr).await.unwrap();
         let service_builder = ServiceBuilder::new();
 
