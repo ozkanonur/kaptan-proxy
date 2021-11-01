@@ -1,9 +1,10 @@
 use config_compiler::config::RoutesStruct;
 use futures::Future;
-use hyper::{header::HeaderName, Body, Client, Request, Response, StatusCode};
+use hyper::{Body, Client, Request, Response, StatusCode};
 use std::{convert::Infallible, pin::Pin, task::Poll};
 use tower::Service;
 
+use crate::http::header_masker;
 use crate::router::RouterService;
 
 #[derive(Clone)]
@@ -28,7 +29,9 @@ impl Service<Request<Body>> for ProxyService {
     }
 
     fn call(&mut self, mut req: Request<Body>) -> Self::Future {
-        let route_dependencies = RouterService {}.get_dependencies(req.uri().to_string(), &self.routes);
+        let route_dependencies =
+            RouterService {}.get_dependencies(req.uri().to_string(), &self.routes);
+        let req_headers = req.headers().clone();
 
         // Return 404 if route doesn't exists
         if route_dependencies.dest_addr.is_empty() {
@@ -43,34 +46,24 @@ impl Service<Request<Body>> for ProxyService {
             });
         }
 
-        // Request header manipulation
-        route_dependencies.req_headers.iter().flatten().for_each(|header| {
-            if header.value.is_some() {
-                req.headers_mut().insert(
-                    HeaderName::from_bytes(header.key.as_bytes()).unwrap(),
-                    header.value.as_ref().unwrap().parse().unwrap(),
-                );
-            } else {
-                req.headers_mut().remove(&header.key);
-            }
-        });
+        // Mask request headers
+        header_masker(
+            &route_dependencies.res_headers,
+            &req_headers,
+            req.headers_mut(),
+        );
 
         Box::pin(async move {
             let client = Client::new();
             *req.uri_mut() = route_dependencies.dest_addr.parse().unwrap();
             let mut res = client.request(req).await.unwrap();
 
-            // Response header manipulation
-            route_dependencies.res_headers.iter().flatten().for_each(|header| {
-                if header.value.is_some() {
-                    res.headers_mut().insert(
-                        HeaderName::from_bytes(header.key.as_bytes()).unwrap(),
-                        header.value.as_ref().unwrap().parse().unwrap(),
-                    );
-                } else {
-                    res.headers_mut().remove(&header.key);
-                }
-            });
+            // Mask response headers
+            header_masker(
+                &route_dependencies.res_headers,
+                &req_headers,
+                res.headers_mut(),
+            );
 
             Ok(res)
         })

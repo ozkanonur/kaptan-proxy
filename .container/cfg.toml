@@ -76,8 +76,8 @@ key = "response-header-2"
 value = "response-header-value-2"
 
 [[proxy.res_headers]]
-key = "response-header-3"
-value = "response-header-value-3"
+key = "linked-user-agent"
+value = "$User-Agent"
 
 [[proxy]]
 inbound_route = "/spesific-route"
