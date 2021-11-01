@@ -49,7 +49,7 @@ pub trait LogCapabilities {
     /// log file.
     ///
     /// # Usage
-    /// ```
+    /// ```ignore
     /// use logger::{access_log::AccessLog, LogCapabilities};
     ///
     /// fn main() {

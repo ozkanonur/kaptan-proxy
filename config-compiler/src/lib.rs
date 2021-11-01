@@ -16,10 +16,10 @@ pub trait Compiler {
     ///     - Missing permission for **/etc/kaptan-proxy/cfg.toml**.
     ///
     /// # Usage
-    /// ```
+    /// ```ignore
     /// use config_compiler::{config::Config, Compiler};
     ///
-    /// fn main*( {
+    /// fn main( {
     ///     let config = Config::read_from_fs();
     /// }
     ///

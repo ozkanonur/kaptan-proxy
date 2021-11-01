@@ -28,10 +28,7 @@ fn main() {
             tokio::spawn(async move {
                 if let Err(http_err) = Http::new()
                     .http1_keep_alive(true)
-                    .serve_connection(
-                        tcp_stream,
-                        service
-                    )
+                    .serve_connection(tcp_stream, service)
                     .await
                 {
                     eprintln!("HTTP exception -> {}", http_err);
@@ -40,4 +37,3 @@ fn main() {
         }
     });
 }
-

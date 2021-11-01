@@ -49,6 +49,9 @@ else
 	cargo run
 endif
 
+test:
+	cargo test
+
 install:
 	@echo todo
 
