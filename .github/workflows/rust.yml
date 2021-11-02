@@ -12,10 +12,9 @@ on:
 jobs:
   check:
     timeout-minutes: 10
-    runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-latest
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
         rust: [stable, 1.56.0]
     steps:
     - uses: actions/checkout@v2
@@ -55,10 +54,9 @@ jobs:
 
   test:
     timeout-minutes: 10
-    runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-latest
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
         rust: [stable, 1.56.0]
     steps:
     - uses: actions/checkout@v2

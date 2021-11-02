@@ -1,4 +1,4 @@
-name: Build and Image build
+name: Image and binary builds
 env:
   JEMALLOC_SYS_WITH_MALLOC_CONF: "background_thread:true,narenas:1,tcache:false,dirty_decay_ms:0,muzzy_decay_ms:0,metadata_thp:auto"
 
@@ -22,7 +22,7 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: build container image
-      run: make build-container
+      run: make build-container env=release
 
   binary-build:
     timeout-minutes: 20

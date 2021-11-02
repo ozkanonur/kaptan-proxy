@@ -1,6 +1,8 @@
+
 # Compilation
 FROM docker.io/library/debian:bullseye-slim as build
 WORKDIR /usr/src/kaptan-proxy
+ARG RELEASE
 
 # Get Rust
 RUN apt-get update \
@@ -13,7 +15,11 @@ ENV PATH="/root/.cargo/bin:${PATH}"
 ENV JEMALLOC_SYS_WITH_MALLOC_CONF="background_thread:true,narenas:1,tcache:false,dirty_decay_ms:0,muzzy_decay_ms:0,metadata_thp:auto"
 
 COPY . .
-RUN cargo build --release
+RUN if [ "$RELEASE" = "TRUE" ]; then \
+		cargo build --release;       \
+	else                             \
+		cargo build;                 \
+    fi
 
 # Runtime
 FROM docker.io/library/debian:bullseye-slim
