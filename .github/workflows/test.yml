@@ -46,7 +46,6 @@ jobs:
       with:
         command: clippy
         args: -- -D warnings
-        command: test
 
   test:
     runs-on: ${{ matrix.os }}

@@ -1,2 +1,0 @@
-{"_time": "2021-11-01 18:04:33.845985316", "method": ""TEST"", "uri": ""/test"", "version": ""1.0"", "headers": "TEST"}
-{"_time": "2021-11-01 18:12:29.034727831", "method": ""GET"", "uri": ""/test/write"", "version": ""HTTP/1.1"", "headers": [HeaderMock { key: "host", value: Some("127.0.0.1") }]}
