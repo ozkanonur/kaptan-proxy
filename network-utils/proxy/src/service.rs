@@ -42,7 +42,7 @@ impl Service<Request<Body>> for ProxyService {
                 res.headers_mut()
                     .insert("content-type", "application/json".parse().unwrap());
 
-                return Ok(res);
+                Ok(res)
             });
         }
 

@@ -22,22 +22,19 @@ pub fn header_masker(
         // add or drop the header depending on the header.value existing
         match &header.value {
             Some(header_value) => {
-                match header_value.chars().nth(0).unwrap() {
+                match header_value.chars().next().unwrap() {
                     // Header linking process
                     '$' => {
                         let slice = &header_value[1..];
                         let linked_header = incoming_headers.get(slice);
 
                         // Check if linked header exists
-                        match linked_header {
-                            Some(header_value) => {
-                                let value = header_value.clone();
-                                outgoing_headers.insert(
-                                    HeaderName::from_bytes(header.key.as_bytes()).unwrap(),
-                                    value,
-                                );
-                            }
-                            None => (),
+                        if let Some(linked_header) = linked_header {
+                            let value = linked_header.clone();
+                            outgoing_headers.insert(
+                                HeaderName::from_bytes(header.key.as_bytes()).unwrap(),
+                                value,
+                            );
                         }
                     }
                     _ => {

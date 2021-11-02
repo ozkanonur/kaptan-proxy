@@ -26,25 +26,25 @@ impl RouterService {
     /// depended on incoming route and returns it as instance of
     /// RouteDependencies.
     #[inline]
-    pub fn get_dependencies(&mut self, req_uri: String, routes: &Vec<RoutesStruct>) -> RouteDependencies {
+    pub fn get_dependencies(&mut self, req_uri: String, routes: &[RoutesStruct]) -> RouteDependencies {
         let mut rd = RouteDependencies::new();
 
         let mut index = routes.iter().position(|r| {
             r.inbound_route == req_uri || r.inbound_route.to_owned() + "/" == req_uri
         });
 
-        if index.is_some() {
-            rd.dest_addr = routes[index.unwrap()].dest_addr.to_string();
+        if let Some(index) = index {
+            rd.dest_addr = routes[index].dest_addr.to_string();
         } else {
             index = routes.iter().position(|r| r.inbound_route == "/");
 
-            if index.is_some() {
-                rd.dest_addr = routes[index.unwrap()].dest_addr.to_string();
+            if let Some(index) = index {
+                rd.dest_addr = routes[index].dest_addr.to_string();
                 rd.dest_addr.push_str(&req_uri);
             }
         }
 
-        if rd.dest_addr.chars().last() != Some('/') {
+        if !rd.dest_addr.ends_with('/') {
             rd.dest_addr.push('/');
         }
 
