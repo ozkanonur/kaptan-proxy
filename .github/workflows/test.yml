@@ -17,7 +17,7 @@ jobs:
       matrix:
         rust: [stable]
     steps:
-      uses: actions/checkout@v2
+    - uses: actions/checkout@v2
     - name: build container image
       run: make build-container
 
