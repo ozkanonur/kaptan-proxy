@@ -59,4 +59,3 @@ pub trait LogCapabilities {
     /// ```
     fn write(&self);
 }
-

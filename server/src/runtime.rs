@@ -42,4 +42,3 @@ pub(crate) fn create(worker_threads: &usize) -> Runtime {
         }
     }
 }
-

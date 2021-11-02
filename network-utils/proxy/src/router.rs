@@ -26,7 +26,11 @@ impl RouterService {
     /// depended on incoming route and returns it as instance of
     /// RouteDependencies.
     #[inline]
-    pub fn get_dependencies(&mut self, req_uri: String, routes: &[RoutesStruct]) -> RouteDependencies {
+    pub fn get_dependencies(
+        &mut self,
+        req_uri: String,
+        routes: &[RoutesStruct],
+    ) -> RouteDependencies {
         let mut rd = RouteDependencies::new();
 
         let mut index = routes.iter().position(|r| {

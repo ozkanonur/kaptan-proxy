@@ -56,7 +56,7 @@ fn test_write() {
 
     headers.push(HeaderMock {
         key: "host".to_string(),
-        value: Some("127.0.0.1".to_string())
+        value: Some("127.0.0.1".to_string()),
     });
 
     AccessLog {
