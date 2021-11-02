@@ -1,5 +1,4 @@
 name: Test
-
 on:
   push:
     branches:
@@ -10,8 +9,8 @@ on:
       - stable
       - dev
 
-jobs:
   image-build:
+    timeout-minutes: 15
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -21,25 +20,8 @@ jobs:
     - name: build container image
       run: make build-container
 
-  clippy:
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        rust: [stable, 1.56.0]
-    steps:
-    - uses: actions/checkout@v2
-    - uses: actions-rs/toolchain@v1
-      with:
-        profile: minimal
-        toolchain: ${{ matrix.rust }}
-        override: true
-    - run: rustup component add clippy
-    - uses: actions-rs/cargo@v1
-      with:
-        command: clippy
-        args: -- -D warnings
-
-  test:
+  binary-build:
+    timeout-minutes: 20
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -54,4 +36,5 @@ jobs:
         override: true
     - uses: actions-rs/cargo@v1
       with:
-        command: test
+        command: build
+        args: --release
