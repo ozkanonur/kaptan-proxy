@@ -12,7 +12,7 @@ on:
       - stable
       - dev
 
-  build-image:
+  image:
     timeout-minutes: 15
     runs-on: ubuntu-latest
     strategy:
@@ -23,7 +23,7 @@ on:
     - name: build container image
       run: make build-container
 
-  build-binary:
+  binary:
     timeout-minutes: 20
     runs-on: ${{ matrix.os }}
     strategy:
