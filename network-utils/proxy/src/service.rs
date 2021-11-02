@@ -19,6 +19,8 @@ pub struct ProxyService {
 impl Service<Request<Body>> for ProxyService {
     type Response = Response<Body>;
     type Error = Infallible;
+
+    #[allow(clippy::type_complexity)]
     type Future = Pin<Box<dyn Future<Output = Result<Self::Response, Self::Error>> + Send>>;
 
     fn poll_ready(
