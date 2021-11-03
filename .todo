@@ -7,7 +7,7 @@
 # Optimization
 
 # Development
-- Write unit tests for current flows
+- Stack all middlewares in single layer
 
 # Other
 
