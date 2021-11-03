@@ -7,8 +7,14 @@ impl Compiler for Config {
         let config_str = fs::read_to_string(config_path)
             .unwrap_or_else(|_| panic!("{} could not found.", config_path));
 
-        let decoded_config: Config = toml::from_str(&config_str).unwrap();
+        let decoded_config: Config = toml::from_str(&config_str)
+            .unwrap_or_else(|_| panic!("Failed to parse configuration file."));
 
         decoded_config
     }
+}
+
+#[test]
+fn test_write() {
+    Config::read_from_fs();
 }

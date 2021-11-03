@@ -23,7 +23,7 @@ where
             .create(true)
             .append(true)
             .read(false)
-            .open("access-logs")
+            .open(super::ACCESS_LOGS_FILE_PATH)
             .expect("Unable to open file");
 
         let mut formatted_bytes = Vec::new();

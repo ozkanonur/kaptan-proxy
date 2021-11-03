@@ -24,9 +24,12 @@ RUN if [ "$RELEASE" = "TRUE" ]; then \
 # Runtime
 FROM docker.io/library/debian:bullseye-slim
 
-## Copy default configuration file
+## Create necessary configuration file
 RUN mkdir /etc/kaptan-proxy
 COPY .container/cfg.toml /etc/kaptan-proxy
+
+RUN mkdir /var/log/kaptan-proxy
+RUN touch /var/log/kaptan-proxy/access-logs
 
 ## Get binary
 COPY --from=build /usr/src/kaptan-proxy/target/release/server /usr/local/bin/kaptan-proxy
