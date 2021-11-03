@@ -12,7 +12,13 @@ IMAGE_TAG = kaptan-proxy
 CONTAINER_NAME = kaptan-proxy
 
 build-container:
+ifeq ($(env), release)
+	@echo Building production image
+	$(call container-tool) build --build-arg RELEASE="TRUE" --no-cache -t $(IMAGE_TAG) -f .container/Containerfile .
+else
+	@echo Building development image
 	$(call container-tool) build --no-cache -t $(IMAGE_TAG) -f .container/Containerfile .
+endif
 
 start-container:
 	$(call container-tool) run --detach --name $(CONTAINER_NAME) --network host $(IMAGE_TAG)
@@ -48,6 +54,9 @@ else
 	@echo Debug compilation has been started
 	cargo run
 endif
+
+test:
+	cargo test
 
 install:
 	@echo todo

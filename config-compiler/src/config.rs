@@ -67,7 +67,7 @@ pub struct RoutesStruct {
     /// Header list that will be sent to the destination address.
     pub req_headers: Option<Vec<HeaderStruct>>,
     /// Header list that will be added in the response of destination address.
-    pub res_headers: Option<Vec<HeaderStruct>>
+    pub res_headers: Option<Vec<HeaderStruct>>,
 }
 
 #[derive(Debug, Clone, serde::Deserialize)]

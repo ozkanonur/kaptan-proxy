@@ -2,6 +2,12 @@
 
 pub mod access_log;
 
+#[cfg(not(debug_assertions))]
+const ACCESS_LOGS_FILE_PATH: &str = "/var/log/kaptan-proxy/access-logs";
+
+#[cfg(debug_assertions)]
+const ACCESS_LOGS_FILE_PATH: &str = ".access-logs";
+
 #[repr(u8)]
 pub enum LogLevel {
     /// TODO:
@@ -49,7 +55,7 @@ pub trait LogCapabilities {
     /// log file.
     ///
     /// # Usage
-    /// ```
+    /// ```ignore
     /// use logger::{access_log::AccessLog, LogCapabilities};
     ///
     /// fn main() {
@@ -59,4 +65,3 @@ pub trait LogCapabilities {
     /// ```
     fn write(&self);
 }
-
