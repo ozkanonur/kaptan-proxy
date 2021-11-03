@@ -51,3 +51,44 @@ pub fn header_masker(
         }
     });
 }
+
+#[test]
+fn test_header_masker() {
+    // Mock headers
+    let mut mask_list = Vec::new();
+    mask_list.push(HeaderStruct {
+        key: "linked-accept-encoding".to_string(),
+        value: Some("$accept-encoding".to_string()),
+    });
+
+    mask_list.push(HeaderStruct {
+        key: "test-header".to_string(),
+        value: None,
+    });
+
+    mask_list.push(HeaderStruct {
+        key: "test-header2".to_string(),
+        value: Some("test-value2".to_string()),
+    });
+
+    let mut incoming_headers = HeaderMap::new();
+    incoming_headers.insert("test-header", "test-value".parse().unwrap());
+    incoming_headers.insert("accept-encoding", "gzip".parse().unwrap());
+
+    let mut outgoing_headers = HeaderMap::new();
+
+    // Should apply masking on outgoing_headers
+    header_masker(&Some(mask_list), &incoming_headers, &mut outgoing_headers);
+    // Shouldn't do anything
+    header_masker(&None, &incoming_headers, &mut outgoing_headers);
+
+    assert_eq!(
+        outgoing_headers.get("linked-accept-encoding"),
+        Some(&HeaderValue::from_static("gzip"))
+    );
+    assert_eq!(outgoing_headers.get("test-header"), None);
+    assert_eq!(
+        outgoing_headers.get("test-header2"),
+        Some(&HeaderValue::from_static("test-value2"))
+    );
+}
