@@ -3,10 +3,10 @@
 pub mod access_log;
 
 #[cfg(not(debug_assertions))]
-static ACCESS_LOGS_FILE_PATH: &str = "/var/log/kaptan-proxy/access-logs";
+const ACCESS_LOGS_FILE_PATH: &str = "/var/log/kaptan-proxy/access-logs";
 
 #[cfg(debug_assertions)]
-static ACCESS_LOGS_FILE_PATH: &str = ".access-logs";
+const ACCESS_LOGS_FILE_PATH: &str = ".access-logs";
 
 #[repr(u8)]
 pub enum LogLevel {
